@@ -61,7 +61,12 @@ in
         src="$HOME/.config/emacs/$f.el"
         eln="$(${emacs}/bin/emacs --batch --eval "(when (native-comp-available-p) (princ (comp-el-to-eln-filename \"$src\")))" 2>/dev/null || true)"
         if [ -n "$eln" ] && [ ! -f "$eln" ]; then
-          run ${emacs}/bin/emacs --batch -f batch-native-compile "$src" \
+          # Same prelude as the byte-compile: without it :ensure runs here,
+          # installs from the network mid-compile and the .eln comes out
+          # requiring every package at startup.
+          run ${emacs}/bin/emacs --batch \
+            --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' \
+            -f batch-native-compile "$src" \
             || echo "emacs-camp: native-compile of $src failed; Emacs will JIT it instead" >&2
           ${lib.optionalString isDarwin ''[ -f "$eln" ] && run ${elnWarm} "$(dirname "$eln")"''}
         fi
