@@ -51,6 +51,7 @@
 ;; macOS vets each .eln on its first dlopen (~0.3s, serialised). Whatever
 ;; package.el compiles into eln-cache/ is vetted by the warmer the Home
 ;; Manager module links as ./eln-warm: at startup, and after each compile batch.
+(defvar native-comp-eln-load-path)        ; absent without native-comp
 (defun ecamp-eln-warm ()
   (let ((warm (expand-file-name (locate-user-emacs-file "eln-warm"))))
     (when (file-executable-p warm)
