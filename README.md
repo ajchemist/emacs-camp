@@ -66,8 +66,8 @@ It reads only basecamp's contract (`basecamp.emacs.package`,
 |---|---|---|
 | byte-compile `lisp/` and `userFiles` | store build (warnings are errors) | switch stops before activating |
 | link `.el` + `.elc` into `~/.config/emacs/` | Home Manager | n/a |
-| native-compile those files | host, `emacsCampNativeCompile` | warning; Emacs JITs instead |
-| install missing packages, compile `elpa/`, refresh quickstart, warm `.eln` | host, background (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
+| native-compile those files (+ warm, macOS) | host, `emacsCampNativeCompile` | warning; Emacs JITs instead |
+| install missing packages, compile `elpa/`, refresh quickstart, warm `.eln` (macOS) | host, background (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
 
 `.eln` files cannot come from the store: their name is keyed by the path
 Emacs loads the source from, which is `~/.config/emacs/...`. The switch does
@@ -75,6 +75,22 @@ not wait for the package sync; an Emacs started meanwhile skips `:ensure`
 (`~/.cache/emacs-camp/sync.pid` is alive), so two processes never install at
 once. A pre-existing `~/.emacs` or `~/.emacs.d` would shadow
 `~/.config/emacs` and is moved to `*.before-emacs-camp` once.
+
+### macOS only: `.eln` warm-up
+
+macOS vets every Mach-O file the first time a process `dlopen`s it (about
+0.3-0.4 s per file, serialised, then cached per file). Native-compiled Lisp
+(`.eln`) files are Mach-O dylibs, so on macOS the first use of each feature
+would stall once. nix-basecamp pays this for Emacs's ~3000 built-in `.eln`;
+emacs-camp pays it for the ones it produces:
+
+- the init and user files' `.eln`, right after they are compiled at switch;
+- package `.eln`, at the end of the background sync, and from Emacs itself at
+  startup and after each async compile batch (`ecamp-eln-warm`).
+
+Linux and Windows have no such check: nothing is warmed there and no
+`eln-warm` link is created. CI measures the cost on a GitHub macOS runner
+(job `deploy`, step "macOS .eln vetting cost").
 
 ### What lands where
 

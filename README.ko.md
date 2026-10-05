@@ -65,8 +65,8 @@ basecamp의 계약(`basecamp.emacs.package`, `.warmProgram`)만 읽고, switch�
 |---|---|---|
 | `lisp/`와 `userFiles` byte-compile | store 빌드 (경고도 에러) | 활성화 전에 switch가 멈춤 |
 | `.el` + `.elc`를 `~/.config/emacs/`에 링크 | Home Manager | 해당 없음 |
-| 그 파일들 native-compile | 호스트, `emacsCampNativeCompile` | 경고만; Emacs가 대신 JIT |
-| 빠진 패키지 설치, `elpa/` 컴파일, quickstart 갱신, `.eln` warm | 호스트, 백그라운드 (`emacsCampPackageSync`) | `~/.cache/emacs-camp/sync.log`에 기록 |
+| 그 파일들 native-compile (+ warm, macOS) | 호스트, `emacsCampNativeCompile` | 경고만; Emacs가 대신 JIT |
+| 빠진 패키지 설치, `elpa/` 컴파일, quickstart 갱신, `.eln` warm (macOS) | 호스트, 백그라운드 (`emacsCampPackageSync`) | `~/.cache/emacs-camp/sync.log`에 기록 |
 
 `.eln`은 store에서 만들 수 없습니다. 파일 이름이 Emacs가 소스를 읽는 경로
 (`~/.config/emacs/...`)로 정해지기 때문입니다. switch는 패키지 sync를 기다리지
@@ -74,6 +74,22 @@ basecamp의 계약(`basecamp.emacs.package`, `.warmProgram`)만 읽고, switch�
 (`~/.cache/emacs-camp/sync.pid`가 살아 있는 동안) 두 프로세스가 동시에 설치하는
 일은 없습니다. 기존 `~/.emacs`나 `~/.emacs.d`는 `~/.config/emacs`를 가리므로 한
 번 `*.before-emacs-camp`로 옮깁니다.
+
+### macOS 한정: `.eln` warm-up
+
+macOS는 프로세스가 Mach-O 파일을 처음 `dlopen`할 때마다 그 파일을 검사합니다
+(파일당 약 0.3-0.4초, 직렬, 이후 파일별 캐시). native 컴파일된 Lisp(`.eln`)는
+Mach-O dylib이므로, macOS에서는 각 기능을 처음 쓸 때 한 번씩 멈칫합니다.
+nix-basecamp가 Emacs 내장 `.eln` 약 3000개를 미리 치르고, emacs-camp는 자신이
+만드는 것을 치릅니다.
+
+- init과 user 파일의 `.eln`: switch 때 컴파일 직후.
+- 패키지 `.eln`: 백그라운드 sync 끝에서, 그리고 Emacs 자신이 시작할 때와 비동기
+  컴파일 배치가 끝날 때(`ecamp-eln-warm`).
+
+Linux와 Windows에는 이런 검사가 없어서 아무것도 warm하지 않고 `eln-warm` 링크도
+만들지 않습니다. CI가 GitHub macOS runner에서 그 비용을 측정합니다(job
+`deploy`, 단계 "macOS .eln vetting cost").
 
 ### 무엇이 어디에 놓이나
 
