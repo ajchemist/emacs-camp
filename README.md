@@ -34,7 +34,7 @@ The `use-package` blocks are the package list.
 
 | Keyword | Meaning |
 |---|---|
-| `:ensure` (default on) | install if missing; does not load |
+| `:ensure` (default on) | install if missing; does not load. Runs only when the file is loaded as source: byte-compiled, use-package drops it, so with the module installing is the deploy-time sync's job (it loads the sources) |
 | none / `:hook` `:bind` `:mode` `:commands` | load on first use (default deferred) |
 | `:demand t` | load at startup; use only for what the first frame needs |
 | `:init` | runs at startup; keep it to `setq` and key bindings |

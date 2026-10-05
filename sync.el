@@ -9,7 +9,11 @@
 
 (require 'package)
 (package-initialize)
-(load (locate-user-emacs-file "init") nil t)
+;; Sources, not the .elc: use-package runs :ensure at byte-compile time and
+;; leaves it out of the compiled code, so init.elc (and user/*.elc) never
+;; install anything. Loading the .el expands the macros now, :ensure included.
+(defvar ecamp-load-source t)
+(load (locate-user-emacs-file "init.el") nil t t)
 
 (require 'comp-run nil t)
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))

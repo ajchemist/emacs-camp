@@ -22,9 +22,12 @@
 ;; The use-package blocks are the package list. :ensure (on for all) installs
 ;; a missing package when its block is read but never loads it: loading waits
 ;; for a :hook/:bind/:mode/:commands trigger (always-defer). Only blocks that
-;; must load at startup say `:demand t'. Under the Home Manager module the
-;; installing happens at deploy, in the background (sync.el); a start
-;; meanwhile skips :ensure so two processes never write elpa/ at once.
+;; must load at startup say `:demand t'. :ensure acts only where this file
+;; is loaded as source: byte-compiled, use-package drops it from the .elc.
+;; So under the Home Manager module (which links a compiled init) installing
+;; is sync.el's job, at deploy in the background; without it (plain copy, no
+;; .elc) it happens at start. A source start during a sync skips :ensure so
+;; two processes never write elpa/ at once.
 (require 'use-package)
 (defun ecamp-sync-running-p ()
   "Non-nil while the deploy-time package sync is running."
@@ -103,8 +106,11 @@
 ;; user/*.el: files a downstream supplies (Home Manager option
 ;; emacs-camp.userFiles), loaded in name order. local.el: unmanaged, per
 ;; host, loaded last so it can override anything.
+(defvar ecamp-load-source nil
+  "Non-nil: load user/*.el as source (sync.el sets it so their :ensure runs).")
 (let ((dir (locate-user-emacs-file "user")))
   (when (file-directory-p dir)
     (dolist (f (directory-files dir t "\\.el\\'"))
-      (load (file-name-sans-extension f) nil 'nomessage))))
+      (load (if ecamp-load-source f (file-name-sans-extension f))
+            nil 'nomessage ecamp-load-source))))
 (load (locate-user-emacs-file "local") 'noerror 'nomessage)
