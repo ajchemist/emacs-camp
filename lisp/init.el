@@ -28,20 +28,25 @@
 ;; is sync.el's job, at deploy in the background; without it (plain copy, no
 ;; .elc) it happens at start. A source start during a sync skips :ensure so
 ;; two processes never write elpa/ at once.
-(require 'use-package)
-(defun ecamp-sync-running-p ()
-  "Non-nil while the deploy-time package sync is running."
-  (let ((pid (ignore-errors
-               (with-temp-buffer
-                 (insert-file-contents
-                  (expand-file-name "emacs-camp/sync.pid"
-                                    (or (getenv "XDG_CACHE_HOME") "~/.cache")))
-                 (string-to-number (buffer-string))))))
-    (and pid (> pid 0) (process-attributes pid) t)))
-(setq use-package-always-ensure (not (and (not noninteractive) (ecamp-sync-running-p)))
-      use-package-always-defer t
-      ;; EMACS_USE_PACKAGE_STATS=1 emacs, then M-x use-package-report.
-      use-package-compute-statistics (getenv "EMACS_USE_PACKAGE_STATS"))
+;; eval-and-compile: these must hold while the byte-compiler expands the
+;; use-package forms below, not only when the .elc runs; otherwise the .elc
+;; is expanded with the defaults and `require's every package at startup.
+(eval-and-compile
+  (require 'use-package)
+  (defun ecamp-sync-running-p ()
+    "Non-nil while the deploy-time package sync is running."
+    (let ((pid (ignore-errors
+                 (with-temp-buffer
+                   (insert-file-contents
+                    (expand-file-name "emacs-camp/sync.pid"
+                                      (or (getenv "XDG_CACHE_HOME") "~/.cache")))
+                   (string-to-number (buffer-string))))))
+      (and pid (> pid 0) (process-attributes pid) t)))
+  (setq use-package-always-ensure (not (and (not noninteractive) (ecamp-sync-running-p)))
+        use-package-always-defer t
+        ;; EMACS_USE_PACKAGE_STATS=1, then M-x use-package-report. Baked in at
+        ;; compile time like the rest, so it needs init.el loaded as source.
+        use-package-compute-statistics (getenv "EMACS_USE_PACKAGE_STATS")))
 
 ;; macOS vets each .eln on its first dlopen (~0.3s, serialised). Whatever
 ;; package.el compiles into eln-cache/ is vetted by the warmer the Home

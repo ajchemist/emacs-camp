@@ -116,7 +116,12 @@ switch 뒤 호스트는 이렇게 생깁니다(macOS 기준; Linux에는 `eln-wa
 | `custom.el` | Custom |
 | `local.el` | 사용자, 호스트별; 마지막에 로드 |
 
-프로파일링: `EMACS_USE_PACKAGE_STATS=1 emacs` 후 `M-x use-package-report`.
+프로파일링: `EMACS_USE_PACKAGE_STATS=1 emacs -q -l ~/.config/emacs/init.el` 후
+`M-x use-package-report`(이 설정은 init.el 컴파일 때 고정되므로 원본을 로드해야 합니다).
+
+use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile` 안에 있습니다.
+use-package는 컴파일 시점에 전개되므로, 단순 `setq`로 두면 `.elc`가 기본값으로
+전개되어 시작할 때 모든 패키지를 로드하게 됩니다.
 
 ## 검사
 

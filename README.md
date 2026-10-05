@@ -118,7 +118,14 @@ link and no `Applications/`):
 | `custom.el` | Custom |
 | `local.el` | you, per host; loaded last |
 
-Profiling: `EMACS_USE_PACKAGE_STATS=1 emacs`, then `M-x use-package-report`.
+Profiling: `EMACS_USE_PACKAGE_STATS=1 emacs -q -l ~/.config/emacs/init.el`, then
+`M-x use-package-report` (the setting is fixed when init.el is compiled, so it
+needs the source loaded).
+
+The use-package policy (`always-ensure`, `always-defer`) sits in
+`eval-and-compile`: use-package expands at compile time, so a plain `setq`
+would leave the `.elc` expanded with the defaults and loading every package at
+startup.
 
 ## Checks
 
