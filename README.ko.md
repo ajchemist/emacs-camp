@@ -21,7 +21,9 @@ your flake     emacs-camp.userFiles로 넣는 자신의 파일
 - **init.el**: package.el + MELPA(melpa > melpa-stable > nongnu > gnu, 설치 시
   native 컴파일), `use-package-always-ensure t` + `use-package-always-defer t`,
   catppuccin latte, macOS Cmd = Meta·Option = Super,
-  exec-path-from-shell(터미널 밖에서 띄운 Emacs.app만), agent-shell, 이어서 `custom.el`,
+  exec-path-from-shell(터미널 밖에서 띄운 Emacs.app만), 완성(vertico, orderless,
+  marginalia, consult, embark + embark-consult; 버퍼 안은 corfu + cape),
+  git(magit + forge, 파일 버퍼마다 diff-hl), agent-shell, 이어서 `custom.el`,
   `user/*.el`, `local.el`.
 
 Nix 없이도 `lisp/*.el`을 `~/.config/emacs/`에 복사하면 동작합니다. 이 경우
@@ -73,7 +75,12 @@ basecamp의 계약(`basecamp.emacs.package`, `.warmProgram`)만 읽고, switch�
 않습니다. 그 사이 시작한 Emacs는 `:ensure`를 건너뛰므로
 (`~/.cache/emacs-camp/sync.pid`가 살아 있는 동안) 두 프로세스가 동시에 설치하는
 일은 없습니다. 기존 `~/.emacs`나 `~/.emacs.d`는 `~/.config/emacs`를 가리므로 한
-번 `*.before-emacs-camp`로 옮깁니다.
+번 `*.before-emacs-camp`로 옮깁니다. switch 때의 native-compile은 store
+byte-compile과 마찬가지로 `:ensure`를 끄고 돌립니다. 그러지 않으면 컴파일 도중
+패키지를 설치하고, 그렇게 나온 `.eln`은 시작할 때마다 모든 패키지를 로드합니다.
+sync는 `elpa/`를 모든 코어로 native-compile하고(Emacs 기본값은 절반이라 3코어
+머신에서는 작업 하나), 단계별(`install`, `native-compile`, `warmed`) 소요
+초를 로그에 남깁니다.
 
 ### macOS 한정: `.eln` warm-up
 
@@ -117,7 +124,7 @@ switch 뒤 호스트는 이렇게 생깁니다(macOS 기준; Linux에는 `eln-wa
 └── local.el                               사용자 파일, 선택, 마지막에 로드
 
 ~/.cache/emacs-camp/
-├── sync.log                         마지막 패키지 sync ("done", "warmed")
+├── sync.log                         마지막 패키지 sync, 단계별 소요 초
 └── sync.pid                         sync가 도는 동안만
 
 ~/.emacs.before-emacs-camp, ~/.emacs.d.before-emacs-camp   있었다면 한 번 옮겨 둔 것
@@ -144,3 +151,21 @@ use-package는 컴파일 시점에 전개되므로, 단순 `setq`로 두면 `.el
 
 `nix flake check`는 플랫폼마다 basecamp의 Emacs와 이 모듈로 home을 하나씩
 빌드하며, 그 과정에서 `lisp/`를 그 Emacs로 byte-compile합니다.
+
+CI(`.github/workflows/ci.yml`)는 lint, ubuntu·macOS·Windows에서 Nix 없는
+런타임, ubuntu·macOS에서 실제 배포를 돌립니다. `ci/smoke.el`은 Emacs가 하는
+방식대로 설정을 띄우고 다음을 확인합니다.
+
+- init이 가벼운지: `ECAMP_INIT_BUDGET`초 이내(기본 1.5, 측정값은 job
+  summary에 남김)이고, magit, forge, transient, consult, embark, diff-hl, vc,
+  org, agent-shell 중 무엇도 시작 시 로드되지 않음.
+- 처음 쓸 때 로드되는지: `C-x g`는 magit(forge가 뒤따름), `M-s l`은 consult,
+  `C-.`는 embark(embark-consult가 합류)를 로드하고, git 저장소의 파일을 열면
+  diff-hl, corfu, cape capf가 켜짐.
+
+runtime job은 `elpa/`를 OS, 패키지 목록, ISO 주차별로 캐시합니다. 매주 도는
+schedule 실행은 빈 상태에서 시작하므로 MELPA 변화는 그대로 드러납니다. Windows
+러너의 PATH에 있는 `gpg`는 Git for Windows의 MSYS 빌드라서 GNU/NonGNU ELPA
+아카이브(`compat`이 있는 곳)마다 `bad-signature`를 냅니다. 그래서 CI는 그곳에서
+서명 검사를 끕니다. Windows 데스크톱이라면 대신 네이티브 gpg(Gpg4win)를
+설치하세요.
