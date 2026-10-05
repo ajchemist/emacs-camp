@@ -55,13 +55,28 @@ jobs:
         with:
           path: ${{ env.D }}/elpa
           key: elpa-${{ matrix.os }}-${{ hashFiles('lisp/*.el') }}-${{ env.WEEK }}
+      - name: GNU ELPA reachability (diagnostic)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        run: |
+          emacs --batch --eval '(progn (require (quote package)) (require (quote epg-config))
+            (message "gnutls=%S gpg=%S epg=%S" (gnutls-available-p) (executable-find "gpg")
+                     (ignore-errors (epg-find-configuration (quote OpenPGP))))
+            (dolist (sig (quote (allow-unsigned nil)))
+              (let ((package-check-signature sig))
+                (condition-case e
+                    (progn (package--download-one-archive (quote ("gnu" . "https://elpa.gnu.org/packages/")) "archive-contents")
+                           (message "check-signature=%S: ok" sig))
+                  (error (message "check-signature=%S: %S" sig e))))))'
       - name: Package sync (installs, compiles, quickstart)
         run: |
           s=$SECONDS
           emacs --batch --init-directory "$D" -l sync.el
           echo "| ${{ matrix.os }} package sync | $((SECONDS - s))s |" >> "$GITHUB_STEP_SUMMARY"
       - name: Byte-compile as the module does
-        run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile "$D"/*.el
+        # lisp/'s files only, as the module does: not the package-quickstart.el
+        # the sync generated next to them.
+        run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
       - name: Smoke
         run: emacs --batch --init-directory "$D" -l ci/smoke.el
       - name: agent-shell E2E (mock ACP agent)
