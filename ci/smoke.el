@@ -25,6 +25,14 @@
 (smoke "custom-file in user dir" (equal custom-file (locate-user-emacs-file "custom.el")))
 (smoke "catppuccin latte enabled" (and (memq 'catppuccin custom-enabled-themes)
                                        (eq (bound-and-true-p catppuccin-flavor) 'latte)))
+(dolist (p '(vertico orderless marginalia consult embark embark-consult corfu cape
+             magit forge diff-hl))
+  (smoke (format "%s installed" p) (package-installed-p p)))
+(smoke "vertico/marginalia/corfu modes on"
+       (and (bound-and-true-p vertico-mode) (bound-and-true-p marginalia-mode)
+            (bound-and-true-p global-corfu-mode)))
+(smoke "orderless completion style" (memq 'orderless completion-styles))
+(smoke "magit deferred (not loaded at init)" (not (featurep 'magit)))
 (smoke "agent-shell installed" (package-installed-p 'agent-shell))
 (smoke "agent-shell deferred (not loaded at init)" (not (featurep 'agent-shell)))
 (smoke "agent-shell command is an autoload" (autoloadp (symbol-function 'agent-shell)))

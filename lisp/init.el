@@ -92,6 +92,90 @@
   :functions exec-path-from-shell-initialize
   :config (exec-path-from-shell-initialize))
 
+;;; Completion
+
+;; Minibuffer: vertico shows the candidates of the built-in completing-read,
+;; orderless matches space-separated pieces in any order, marginalia
+;; annotates them, consult adds the search/jump commands, embark acts on the
+;; candidate at point. In buffers: corfu pops up completion-at-point, cape
+;; adds more capfs to it.
+
+(use-package vertico
+  :demand t
+  :functions vertico-mode
+  :config (vertico-mode 1))
+
+(use-package savehist                   ; vertico sorts by this history
+  :ensure nil
+  :demand t
+  :config (savehist-mode 1))
+
+(use-package orderless
+  :demand t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package marginalia
+  :demand t
+  :functions marginalia-mode
+  :config (marginalia-mode 1))
+
+(use-package consult
+  :bind (([remap switch-to-buffer] . consult-buffer)
+         ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
+         ([remap project-switch-to-buffer] . consult-project-buffer)
+         ([remap yank-pop] . consult-yank-pop)
+         ([remap goto-line] . consult-goto-line)
+         ([remap imenu] . consult-imenu)
+         ("M-s l" . consult-line)
+         ("M-s r" . consult-ripgrep)
+         ("M-s f" . consult-find)
+         :map isearch-mode-map
+         ("M-s l" . consult-line))
+  :custom
+  (xref-show-xrefs-function #'consult-xref)
+  (xref-show-definitions-function #'consult-xref))
+
+(use-package embark
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)
+         ("C-h B" . embark-bindings))
+  :custom (prefix-help-command #'embark-prefix-help-command))
+
+(use-package embark-consult
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package corfu
+  :demand t
+  :functions global-corfu-mode
+  :custom
+  (corfu-auto t)
+  (corfu-cycle t)
+  :config (global-corfu-mode 1))
+
+(use-package cape
+  :demand t
+  :functions cape-dabbrev cape-file
+  :config
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file))
+
+;;; Git
+
+(use-package magit
+  :bind ("C-x g" . magit-status))
+
+(use-package forge
+  :after magit)
+
+(use-package diff-hl
+  :demand t
+  :functions global-diff-hl-mode
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
+  :config (global-diff-hl-mode 1))
+
 ;;; Agents
 
 ;; agent-shell: ACP agents (Claude Code, Codex, Gemini, ...) in a comint
