@@ -22,7 +22,8 @@ your flake     your own files through emacs-camp.userFiles
 - **init.el**: package.el + MELPA (melpa > melpa-stable > nongnu > gnu,
   native-compiled at install), `use-package-always-ensure t` +
   `use-package-always-defer t`, catppuccin latte, macOS Cmd = Meta and
-  Option = Super, then `custom.el`, `user/*.el`, `local.el`.
+  Option = Super, exec-path-from-shell (Emacs.app started outside a
+  terminal only), agent-shell, then `custom.el`, `user/*.el`, `local.el`.
 
 Without Nix, copying `lisp/*.el` into `~/.config/emacs/` works; packages then
 install on the first start instead of at deploy.
@@ -38,6 +39,10 @@ The `use-package` blocks are the package list.
 | `:demand t` | load at startup; use only for what the first frame needs |
 | `:init` | runs at startup; keep it to `setq` and key bindings |
 | `:config` | runs when the package loads (`with-eval-after-load`) |
+
+A block whose `:config` calls a package function needs `:functions name`
+(or `:commands`): the store build compiles init.el without the packages
+installed and treats "not known to be defined" as an error.
 
 Upgrading is `M-x package-upgrade-all`; removing a block leaves the package
 installed (`M-x package-delete`).
@@ -72,6 +77,38 @@ once. A pre-existing `~/.emacs` or `~/.emacs.d` would shadow
 `~/.config/emacs` and is moved to `*.before-emacs-camp` once.
 
 ### What lands where
+
+After a switch the host looks like this (macOS; Linux has no `eln-warm`
+link and no `Applications/`):
+
+```
+~/.config/emacs/                     user-emacs-directory (a real directory)
+├── early-init.el  -> /nix/store/…-emacs-camp-config/early-init.el
+├── early-init.elc -> /nix/store/…-emacs-camp-config/early-init.elc
+├── init.el        -> /nix/store/…-emacs-camp-config/init.el
+├── init.elc       -> /nix/store/…-emacs-camp-config/init.elc
+├── user/
+│   ├── fonts.el   -> /nix/store/…   one pair per emacs-camp.userFiles entry
+│   └── fonts.elc  -> /nix/store/…
+├── eln-warm       -> /nix/store/…-eln-warm/bin/eln-warm   (macOS)
+├── eln-cache/31.1-<hash>/
+│   ├── init-<path>-<content>.eln          compiled at switch
+│   └── agent-shell-<path>-<content>.eln   compiled by the package sync
+├── elpa/
+│   ├── agent-shell-<version>/ …           installed by the package sync
+│   └── archives/                          MELPA/ELPA indexes
+├── package-quickstart.el(c)               all package autoloads in one file
+├── custom.el                              Custom's writes
+└── local.el                               yours, optional, loaded last
+
+~/.cache/emacs-camp/
+├── sync.log                         last package sync ("done", "warmed")
+└── sync.pid                         only while a sync runs
+
+~/.emacs.before-emacs-camp, ~/.emacs.d.before-emacs-camp   moved aside once, if they existed
+
+/nix/store/…-emacs-31.1/             the Emacs (nix-basecamp), built-in .eln included
+```
 
 | Path in `~/.config/emacs/` | Owner |
 |---|---|

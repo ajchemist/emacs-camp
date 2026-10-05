@@ -20,7 +20,8 @@ your flake     emacs-camp.userFiles로 넣는 자신의 파일
   시작 화면 없음, init 동안 GC 끔 → 이후 100MB, `package-quickstart`.
 - **init.el**: package.el + MELPA(melpa > melpa-stable > nongnu > gnu, 설치 시
   native 컴파일), `use-package-always-ensure t` + `use-package-always-defer t`,
-  catppuccin latte, macOS Cmd = Meta·Option = Super, 이어서 `custom.el`,
+  catppuccin latte, macOS Cmd = Meta·Option = Super,
+  exec-path-from-shell(터미널 밖에서 띄운 Emacs.app만), agent-shell, 이어서 `custom.el`,
   `user/*.el`, `local.el`.
 
 Nix 없이도 `lisp/*.el`을 `~/.config/emacs/`에 복사하면 동작합니다. 이 경우
@@ -37,6 +38,10 @@ Nix 없이도 `lisp/*.el`을 `~/.config/emacs/`에 복사하면 동작합니다.
 | `:demand t` | 시작 때 로드; 첫 프레임에 필요한 것만 |
 | `:init` | 시작 때 실행; `setq`와 키 바인딩 정도만 |
 | `:config` | 패키지가 로드될 때 실행 (`with-eval-after-load`) |
+
+`:config`에서 패키지 함수를 부르는 블록은 `:functions 이름`(또는 `:commands`)이
+필요합니다. store 빌드는 패키지 없이 init.el을 컴파일하며 "not known to be
+defined" 경고도 에러로 취급하기 때문입니다.
 
 업그레이드는 `M-x package-upgrade-all`. 블록을 지워도 패키지는 남습니다
 (`M-x package-delete`).
@@ -71,6 +76,37 @@ basecamp의 계약(`basecamp.emacs.package`, `.warmProgram`)만 읽고, switch�
 번 `*.before-emacs-camp`로 옮깁니다.
 
 ### 무엇이 어디에 놓이나
+
+switch 뒤 호스트는 이렇게 생깁니다(macOS 기준; Linux에는 `eln-warm` 링크가 없습니다).
+
+```
+~/.config/emacs/                     user-emacs-directory (일반 디렉터리)
+├── early-init.el  -> /nix/store/…-emacs-camp-config/early-init.el
+├── early-init.elc -> /nix/store/…-emacs-camp-config/early-init.elc
+├── init.el        -> /nix/store/…-emacs-camp-config/init.el
+├── init.elc       -> /nix/store/…-emacs-camp-config/init.elc
+├── user/
+│   ├── fonts.el   -> /nix/store/…   emacs-camp.userFiles 항목마다 한 쌍
+│   └── fonts.elc  -> /nix/store/…
+├── eln-warm       -> /nix/store/…-eln-warm/bin/eln-warm   (macOS)
+├── eln-cache/31.1-<hash>/
+│   ├── init-<path>-<content>.eln          switch 때 컴파일
+│   └── agent-shell-<path>-<content>.eln   패키지 sync가 컴파일
+├── elpa/
+│   ├── agent-shell-<version>/ …           패키지 sync가 설치
+│   └── archives/                          MELPA/ELPA 목록
+├── package-quickstart.el(c)               모든 패키지 autoload를 한 파일로
+├── custom.el                              Custom이 쓰는 곳
+└── local.el                               사용자 파일, 선택, 마지막에 로드
+
+~/.cache/emacs-camp/
+├── sync.log                         마지막 패키지 sync ("done", "warmed")
+└── sync.pid                         sync가 도는 동안만
+
+~/.emacs.before-emacs-camp, ~/.emacs.d.before-emacs-camp   있었다면 한 번 옮겨 둔 것
+
+/nix/store/…-emacs-31.1/             Emacs 본체 (nix-basecamp), 내장 .eln 포함
+```
 
 | `~/.config/emacs/` 안의 경로 | 주인 |
 |---|---|

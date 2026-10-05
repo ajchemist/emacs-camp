@@ -71,6 +71,25 @@
   :custom (catppuccin-flavor 'latte)
   :config (load-theme 'catppuccin t))
 
+;;; Environment
+
+;; Emacs.app started from the Dock or Finder gets launchd's PATH, not the
+;; login shell's, so CLIs installed by bun, fnm, Homebrew... are missing.
+;; Only then (no TERM: not started from a terminal) ask the shell once.
+(use-package exec-path-from-shell
+  :if (and (memq window-system '(mac ns)) (not (getenv "TERM")))
+  :demand t
+  :functions exec-path-from-shell-initialize
+  :config (exec-path-from-shell-initialize))
+
+;;; Agents
+
+;; agent-shell: ACP agents (Claude Code, Codex, Gemini, ...) in a comint
+;; buffer. Loads on the first M-x agent-shell / agent-shell-*-start-*.
+;; Each agent needs its ACP adapter on PATH: claude-agent-acp, codex-acp, ...
+;; (see agent-shell's README).
+(use-package agent-shell)
+
 ;;; Keys
 
 (when (eq system-type 'darwin)
