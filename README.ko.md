@@ -88,8 +88,9 @@ nix-basecamp가 Emacs 내장 `.eln` 약 3000개를 미리 치르고, emacs-camp�
   컴파일 배치가 끝날 때(`ecamp-eln-warm`).
 
 Linux와 Windows에는 이런 검사가 없어서 아무것도 warm하지 않고 `eln-warm` 링크도
-만들지 않습니다. CI가 GitHub macOS runner에서 그 비용을 측정합니다(job
-`deploy`, 단계 "macOS .eln vetting cost").
+만들지 않습니다. GitHub의 macOS runner도 이 검사를 하지 않습니다(CI의 "macOS
+.eln vetting cost" 단계는 두 번 모두 0.000초). 일반 Apple Silicon Mac에서는 새
+`.eln`의 첫 열기가 약 0.4초 걸립니다.
 
 ### 무엇이 어디에 놓이나
 

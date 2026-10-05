@@ -89,8 +89,9 @@ emacs-camp pays it for the ones it produces:
   startup and after each async compile batch (`ecamp-eln-warm`).
 
 Linux and Windows have no such check: nothing is warmed there and no
-`eln-warm` link is created. CI measures the cost on a GitHub macOS runner
-(job `deploy`, step "macOS .eln vetting cost").
+`eln-warm` link is created. GitHub's macOS runners do not perform the check
+either (CI's "macOS .eln vetting cost" step sees 0.000 s on both opens); on an
+ordinary Apple Silicon Mac the first open of a fresh `.eln` costs ~0.4 s.
 
 ### What lands where
 
