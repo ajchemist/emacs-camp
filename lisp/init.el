@@ -167,14 +167,16 @@
 (use-package magit
   :bind ("C-x g" . magit-status))
 
-(use-package forge
-  :after magit)
+(use-package forge                       ; with magit, not before
+  :after magit
+  :demand t)
 
+;; Per buffer, not global-diff-hl-mode: that would load vc, diff-mode and
+;; log-edit at startup. diff-hl loads with the first file buffer.
 (use-package diff-hl
-  :demand t
-  :functions global-diff-hl-mode
-  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
-  :config (global-diff-hl-mode 1))
+  :hook ((prog-mode text-mode conf-mode) . diff-hl-mode)
+  :hook (dired-mode . diff-hl-dired-mode)
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh))
 
 ;;; Agents
 

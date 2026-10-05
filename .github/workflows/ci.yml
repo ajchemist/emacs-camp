@@ -45,7 +45,16 @@ jobs:
         run: |
           d="$RUNNER_TEMP/emacs.d"; mkdir -p "$d"; cp lisp/*.el "$d/"
           echo "D=$d" >> "$GITHUB_ENV"
+          echo "WEEK=$(date -u +%G-%V)" >> "$GITHUB_ENV"
           emacs --version | head -1
+      # elpa/ cached per OS, package list and ISO week: pushes and PRs skip the
+      # MELPA download; the weekly cron run starts empty so drift still shows.
+      - name: Cache elpa/
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.D }}/elpa
+          key: elpa-${{ matrix.os }}-${{ hashFiles('lisp/*.el') }}-${{ env.WEEK }}
       - name: Package sync (installs, compiles, quickstart)
         run: |
           s=$SECONDS
