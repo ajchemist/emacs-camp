@@ -75,7 +75,7 @@ in
       d="''${XDG_CACHE_HOME:-$HOME/.cache}/emacs-camp"
       if ! kill -0 "$(cat "$d/sync.pid" 2>/dev/null)" 2>/dev/null; then
         run mkdir -p "$d"
-        run nohup sh -c 'echo $$ >"$0/sync.pid"; { "$1" --batch -l "$2" && ''${3:+"$3" "$4"}; } >"$0/sync.log" 2>&1; rm -f "$0/sync.pid"' \
+        run nohup sh -c 'echo $$ >"$0/sync.pid"; { "$1" --batch -l "$2" && if [ -n "$3" ]; then "$3" "$4" && echo "emacs-camp sync: warmed $4"; fi; } >"$0/sync.log" 2>&1; rm -f "$0/sync.pid"' \
           "$d" ${emacs}/bin/emacs ${./sync.el} \
           "${lib.optionalString isDarwin elnWarm}" "$HOME/.config/emacs/eln-cache" \
           >/dev/null 2>&1 </dev/null &

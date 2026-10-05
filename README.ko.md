@@ -1,0 +1,88 @@
+# emacs-camp
+
+[English](README.md) · 한국어
+
+init은 가볍게 유지하면서 패키지 확장성은 포기하지 않는 Emacs 런타임입니다.
+`use-package`가 빠진 패키지를 설치하고, 실제로 쓰기 전까지는 아무것도 로드하지
+않으며, 패키지가 로드되는 순간 그 패키지의 설정을 적용합니다. Emacs 자체의
+설치는 [nix-basecamp](https://github.com/ajchemist/nix-basecamp)가 맡고,
+emacs-camp는 그 안에서 도는 것만 다룹니다.
+
+```
+nix-basecamp   Emacs 바이너리, GUI/nox, Emacs.app, store .eln warm-up
+emacs-camp     lisp/ 런타임 + 이를 배포하는 Home Manager 모듈
+your flake     emacs-camp.userFiles로 넣는 자신의 파일
+```
+
+## 런타임 (`lisp/`, Nix 불필요)
+
+- **early-init.el**: tool bar·scroll bar 없음(macOS는 시스템 메뉴바 유지),
+  시작 화면 없음, init 동안 GC 끔 → 이후 100MB, `package-quickstart`.
+- **init.el**: package.el + MELPA(melpa > melpa-stable > nongnu > gnu, 설치 시
+  native 컴파일), `use-package-always-ensure t` + `use-package-always-defer t`,
+  catppuccin latte, macOS Cmd = Meta·Option = Super, 이어서 `custom.el`,
+  `user/*.el`, `local.el`.
+
+Nix 없이도 `lisp/*.el`을 `~/.config/emacs/`에 복사하면 동작합니다. 이 경우
+패키지는 배포 때가 아니라 첫 시작 때 설치됩니다.
+
+### 패키지
+
+`use-package` 블록이 곧 패키지 목록입니다.
+
+| 키워드 | 의미 |
+|---|---|
+| `:ensure` (기본 켜짐) | 없으면 설치; 로드하지 않음 |
+| 없음 / `:hook` `:bind` `:mode` `:commands` | 처음 쓸 때 로드 (기본이 지연) |
+| `:demand t` | 시작 때 로드; 첫 프레임에 필요한 것만 |
+| `:init` | 시작 때 실행; `setq`와 키 바인딩 정도만 |
+| `:config` | 패키지가 로드될 때 실행 (`with-eval-after-load`) |
+
+업그레이드는 `M-x package-upgrade-all`. 블록을 지워도 패키지는 남습니다
+(`M-x package-delete`).
+
+## Home Manager 모듈
+
+```nix
+inputs.emacs-camp = {
+  url = "github:ajchemist/emacs-camp";
+  inputs.basecamp.follows = "basecamp";
+};
+# basecamp.lib.mkDarwin / mkHome으로 만든 home, basecamp.emacs.enable = true에서:
+imports = [ emacs-camp.homeModules.default ];
+emacs-camp.userFiles = [ ./emacs/fonts.el ];
+```
+
+basecamp의 계약(`basecamp.emacs.package`, `.warmProgram`)만 읽고, switch마다
+다음을 합니다.
+
+| 단계 | 어디서 | 실패하면 |
+|---|---|---|
+| `lisp/`와 `userFiles` byte-compile | store 빌드 (경고도 에러) | 활성화 전에 switch가 멈춤 |
+| `.el` + `.elc`를 `~/.config/emacs/`에 링크 | Home Manager | 해당 없음 |
+| 그 파일들 native-compile | 호스트, `emacsCampNativeCompile` | 경고만; Emacs가 대신 JIT |
+| 빠진 패키지 설치, `elpa/` 컴파일, quickstart 갱신, `.eln` warm | 호스트, 백그라운드 (`emacsCampPackageSync`) | `~/.cache/emacs-camp/sync.log`에 기록 |
+
+`.eln`은 store에서 만들 수 없습니다. 파일 이름이 Emacs가 소스를 읽는 경로
+(`~/.config/emacs/...`)로 정해지기 때문입니다. switch는 패키지 sync를 기다리지
+않습니다. 그 사이 시작한 Emacs는 `:ensure`를 건너뛰므로
+(`~/.cache/emacs-camp/sync.pid`가 살아 있는 동안) 두 프로세스가 동시에 설치하는
+일은 없습니다. 기존 `~/.emacs`나 `~/.emacs.d`는 `~/.config/emacs`를 가리므로 한
+번 `*.before-emacs-camp`로 옮깁니다.
+
+### 무엇이 어디에 놓이나
+
+| `~/.config/emacs/` 안의 경로 | 주인 |
+|---|---|
+| `early-init.el(c)`, `init.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | 모듈 (store 링크) |
+| `eln-cache/` | 위 파일들은 모듈, 패키지는 package.el |
+| `elpa/`, `package-quickstart.el` | package.el |
+| `custom.el` | Custom |
+| `local.el` | 사용자, 호스트별; 마지막에 로드 |
+
+프로파일링: `EMACS_USE_PACKAGE_STATS=1 emacs` 후 `M-x use-package-report`.
+
+## 검사
+
+`nix flake check`는 플랫폼마다 basecamp의 Emacs와 이 모듈로 home을 하나씩
+빌드하며, 그 과정에서 `lisp/`를 그 Emacs로 byte-compile합니다.

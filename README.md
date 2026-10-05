@@ -1,5 +1,7 @@
 # emacs-camp
 
+English · [한국어](README.ko.md)
+
 An Emacs runtime that keeps init light without giving up on packages:
 `use-package` installs what is missing, loads nothing until it is used, and
 configures each package when it loads. Built on
