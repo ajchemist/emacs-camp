@@ -68,7 +68,8 @@
 ;;; UI
 
 (column-number-mode 1)
-(fringe-mode '(12 . 12))
+(when (fboundp 'fringe-mode)               ; absent without a window system
+  (fringe-mode '(12 . 12)))
 (setq visible-bell nil
       ring-bell-function (lambda ()
                            (invert-face 'mode-line)
@@ -100,6 +101,9 @@
 
 ;;; Keys
 
+;; NS-only variables: declared so the file compiles on every OS.
+(defvar ns-command-modifier)
+(defvar ns-alternate-modifier)
 (when (eq system-type 'darwin)
   (setq ns-command-modifier 'meta        ; Cmd is Meta
         ns-alternate-modifier 'super))   ; Option is Super
