@@ -6,12 +6,6 @@
 
 ;;; Packages
 
-;; Windows builds of Emacs fail the TLS 1.3 handshake with elpa.gnu.org and
-;; elpa.nongnu.org ("Failed to download `gnu' archive"), and compat lives there.
-(defvar gnutls-algorithm-priority)
-(when (eq system-type 'windows-nt)
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
-
 ;; package.el + MELPA, deliberately not Nix: the packages worth following move
 ;; daily and a Nix snapshot of MELPA trails by weeks.
 (require 'package)

@@ -55,23 +55,15 @@ jobs:
         with:
           path: ${{ env.D }}/elpa
           key: elpa-${{ matrix.os }}-${{ hashFiles('lisp/*.el') }}-${{ env.WEEK }}
-      - name: GNU ELPA reachability (diagnostic)
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        run: |
-          emacs --batch --eval '(progn (require (quote package)) (require (quote epg-config))
-            (message "gnutls=%S gpg=%S epg=%S" (gnutls-available-p) (executable-find "gpg")
-                     (ignore-errors (epg-find-configuration (quote OpenPGP))))
-            (dolist (sig (quote (allow-unsigned nil)))
-              (let ((package-check-signature sig))
-                (condition-case e
-                    (progn (package--download-one-archive (quote ("gnu" . "https://elpa.gnu.org/packages/")) "archive-contents")
-                           (message "check-signature=%S: ok" sig))
-                  (error (message "check-signature=%S: %S" sig e))))))'
       - name: Package sync (installs, compiles, quickstart)
         run: |
           s=$SECONDS
-          emacs --batch --init-directory "$D" -l sync.el
+          # Windows runners: the gpg on PATH is Git for Windows' MSYS build,
+          # which fails every GNU/NonGNU ELPA signature (bad-signature on
+          # archive-contents.sig), and compat lives there. CI skips the
+          # check; a Windows desktop wants a native gpg (Gpg4win) instead.
+          pre='()'; [ "$RUNNER_OS" = Windows ] && pre='(setq package-check-signature nil)'
+          emacs --batch --init-directory "$D" --eval "$pre" -l sync.el
           echo "| ${{ matrix.os }} package sync | $((SECONDS - s))s |" >> "$GITHUB_STEP_SUMMARY"
       - name: Byte-compile as the module does
         # lisp/'s files only, as the module does: not the package-quickstart.el
