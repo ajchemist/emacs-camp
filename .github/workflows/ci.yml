@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1" # weekly: MELPA moves under us
+
+jobs:
+  # Static: every flake output evaluates, lisp/ byte-compiles against
+  # nix-basecamp's Emacs with warnings as errors, CI helpers parse.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Evaluate all outputs
+        run: nix flake check --all-systems --no-build
+      - name: Byte-compile lisp/ against basecamp's Emacs (module check)
+        run: nix build .#checks.x86_64-linux.home
+      - name: Helpers parse
+        run: |
+          python3 -m py_compile ci/mock-acp-agent.py
+          bash -n ci/e2e-deploy.sh ci/eln-vetting.sh
+
+  # The Nix-free runtime on every OS: a stock Emacs, lisp/ copied in, the
+  # package sync, a module-style byte-compile, then smoke + agent-shell E2E.
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jcs090218/setup-emacs@master
+        with:
+          version: "30.2"
+      - name: Lay out an init directory
+        run: |
+          d="$RUNNER_TEMP/emacs.d"; mkdir -p "$d"; cp lisp/*.el "$d/"
+          echo "D=$d" >> "$GITHUB_ENV"
+          emacs --version | head -1
+      - name: Package sync (installs, compiles, quickstart)
+        run: |
+          s=$SECONDS
+          emacs --batch --init-directory "$D" -l sync.el
+          echo "| ${{ matrix.os }} package sync | $((SECONDS - s))s |" >> "$GITHUB_STEP_SUMMARY"
+      - name: Byte-compile as the module does
+        run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile "$D"/*.el
+      - name: Smoke
+        run: emacs --batch --init-directory "$D" -l ci/smoke.el
+      - name: agent-shell E2E (mock ACP agent)
+        run: emacs --batch --init-directory "$D" -l ci/agent-shell-e2e.el
+
+  # The product path: nix-basecamp's builder + this module applied to the
+  # runner for real, then the same smoke and E2E against what landed.
+  deploy:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Deploy onto the runner
+        run: ./ci/e2e-deploy.sh
+      - name: Smoke (deployed config)
+        run: '"$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/smoke.el'
+      - name: agent-shell E2E (mock ACP agent)
+        run: '"$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/agent-shell-e2e.el'
+      - name: Re-deploy is quiet (no reinstall, no recompile)
+        run: ./ci/e2e-deploy.sh
+      - name: macOS .eln vetting cost (why the warm-up exists)
+        if: runner.os == 'macOS'
+        run: ./ci/eln-vetting.sh
+
+  # agent-shell against the real Claude Code ACP adapter. Runs only where the
+  # ANTHROPIC_API_KEY secret exists (never on forks' pull requests).
+  agent-shell-claude:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.ANTHROPIC_API_KEY != ''
+      - uses: jcs090218/setup-emacs@master
+        if: env.ANTHROPIC_API_KEY != ''
+        with:
+          version: "30.2"
+      - uses: oven-sh/setup-bun@v2
+        if: env.ANTHROPIC_API_KEY != ''
+      - name: Real agent round trip
+        if: env.ANTHROPIC_API_KEY != ''
+        run: |
+          bun add -g @agentclientprotocol/claude-agent-acp
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.bun/bin:$PATH"
+          d="$RUNNER_TEMP/emacs.d"; mkdir -p "$d"; cp lisp/*.el "$d/"
+          emacs --batch --init-directory "$d" -l sync.el
+          ECAMP_E2E_AGENT=claude emacs --batch --init-directory "$d" -l ci/agent-shell-e2e.el
+      - name: Skipped (no ANTHROPIC_API_KEY secret)
+        if: env.ANTHROPIC_API_KEY == ''
+        run: echo "::notice::agent-shell-claude skipped; add the ANTHROPIC_API_KEY repository secret to run it"

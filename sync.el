@@ -18,7 +18,8 @@
 (require 'comp-run nil t)
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
   (native-compile-async package-user-dir 'recursively)
-  (while (or comp-files-queue (> (comp--async-runnings) 0))
+  (while (or comp-files-queue
+             (> (if (fboundp 'comp--async-runnings) (comp--async-runnings) (comp-async-runnings)) 0))
     (sleep-for 1)))
 
 (package-quickstart-refresh)
