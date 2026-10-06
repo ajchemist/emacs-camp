@@ -79,15 +79,24 @@ in
     # Each switch kicks off package work in the background: sync.el installs
     # whatever :ensure blocks lack, compiles elpa/ and refreshes quickstart,
     # followed by the macOS warmer. Never two at once; while sync.pid is alive
-    # init.el leaves :ensure alone.
+    # init.el leaves :ensure alone. The first switch (no elpa/ yet) waits for
+    # it instead, so Emacs is complete as soon as the switch returns.
     home.activation.emacsCampPackageSync = lib.hm.dag.entryAfter [ "emacsCampNativeCompile" ] ''
       d="''${XDG_CACHE_HOME:-$HOME/.cache}/emacs-camp"
-      if ! kill -0 "$(cat "$d/sync.pid" 2>/dev/null)" 2>/dev/null; then
-        run mkdir -p "$d"
-        run nohup sh -c 'echo $$ >"$0/sync.pid"; { "$1" --batch -l "$2" && if [ -n "$3" ]; then t=$(date +%s); "$3" "$4" && echo "emacs-camp sync: warmed $4 $(( $(date +%s) - t ))s"; fi; } >"$0/sync.log" 2>&1; rm -f "$0/sync.pid"' \
+      ecamp_sync() {
+        run nohup sh -c 'echo $$ >"$0/sync.pid"; { "$1" --batch -l "$2" && if [ -n "$3" ]; then t=$(date +%s); "$3" "$4" && echo "emacs-camp sync: warmed $4 $(( $(date +%s) - t ))s"; fi; } >"$0/sync.log" 2>&1; s=$?; rm -f "$0/sync.pid"; exit $s' \
           "$d" ${emacs}/bin/emacs ${./sync.el} \
           "${lib.optionalString isDarwin elnWarm}" "$HOME/.config/emacs/eln-cache" \
-          >/dev/null 2>&1 </dev/null &
+          >/dev/null 2>&1 </dev/null
+      }
+      if ! kill -0 "$(cat "$d/sync.pid" 2>/dev/null)" 2>/dev/null; then
+        run mkdir -p "$d"
+        if [ -d "$HOME/.config/emacs/elpa" ]; then
+          ecamp_sync &
+        else
+          echo "emacs-camp: first install, syncing packages (log: $d/sync.log)"
+          ecamp_sync || echo "emacs-camp: package sync failed; see $d/sync.log" >&2
+        fi
       fi
     '';
 

@@ -72,11 +72,12 @@ The module depends on nothing from basecamp beyond its contract
 | byte-compile `lisp/` and `userFiles` | store build (warnings are errors) | switch stops before activating |
 | link `.el` + `.elc` into `~/.config/emacs/` | Home Manager | n/a |
 | native-compile those files (+ warm, macOS) | host, `emacsCampNativeCompile` | warning; Emacs JITs instead |
-| install missing packages, compile `elpa/`, refresh quickstart, warm `.eln` (macOS) | host, background (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
+| install missing packages, compile `elpa/`, refresh quickstart, warm `.eln` (macOS) | host, background; first switch waits (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
 
 The store can't provide `.eln` files, because each file's name is derived from
 the path Emacs reads the source from, and that path is `~/.config/emacs/...`.
-A switch returns without waiting for the package sync. If you start Emacs in
+A switch returns without waiting for the package sync, except the first one
+(no `elpa/` yet), which waits so Emacs starts complete. If you start Emacs in
 the meantime it skips `:ensure` while `~/.cache/emacs-camp/sync.pid` points at
 a live process, so installs never run in two processes at once. Native
 compilation at switch time also has `:ensure` turned off, as in the store

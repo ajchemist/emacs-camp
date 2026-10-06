@@ -75,7 +75,7 @@ emacs-camp.korean.enable = true;  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우�
 
 `.eln`을 store에서 가져올 수는 없습니다. 파일 이름이 Emacs가 소스를 읽어 오는
 경로(`~/.config/emacs/...`)에서 나오기 때문입니다. switch는 패키지 sync가
-끝날 때까지 기다리지 않습니다. 그동안 Emacs를 띄우면
+끝날 때까지 기다리지 않습니다(`elpa/`가 아직 없는 첫 switch만 기다려서, 끝나면 바로 완전한 상태로 뜹니다). 그동안 Emacs를 띄우면
 `~/.cache/emacs-camp/sync.pid`의 프로세스가 살아 있는 한 `:ensure`를 건너뛰므로,
 두 프로세스가 동시에 설치하는 일은 생기지 않습니다. switch 시점의
 native-compile도 store byte-compile처럼 `:ensure`를 끈 채로 돌립니다. 끄지
