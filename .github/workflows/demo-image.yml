@@ -3,7 +3,7 @@ name: Demo image
 # ghcr.io/ajchemist/emacs-camp-demo, which the Killercoda scenario runs.
 on:
   push:
-    branches: [main]
+    branches: [main, demo]
     paths: [lisp/**, sync.el, demo/**, .github/workflows/demo-image.yml]
   workflow_dispatch:
   schedule:
