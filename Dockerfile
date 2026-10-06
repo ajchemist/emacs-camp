@@ -19,10 +19,10 @@ COPY --from=emacs /usr/local /usr/local
 USER user
 WORKDIR /home/user
 COPY --chown=user:user lisp/ .config/emacs/
-# extras/ (opt-in under the module) load as user files, so the demo shows them all.
-COPY --chown=user:user extras/ .config/emacs/user/
+# extras/ ship but stay off: M-x customize-variable ecamp-extras turns one on.
+COPY --chown=user:user extras/ .config/emacs/extras/
 COPY sync.el compile.el /tmp/
 RUN emacs --batch -l /tmp/sync.el \
- && cd .config/emacs && emacs --batch -l /tmp/compile.el -f batch-byte-compile early-init.el init.el user/*.el
+ && cd .config/emacs && emacs --batch -l /tmp/compile.el -f batch-byte-compile early-init.el init.el extras/*.el
 ENV TERM=xterm-256color LANG=C.UTF-8
 CMD ["emacs"]

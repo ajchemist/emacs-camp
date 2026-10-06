@@ -42,7 +42,8 @@ your flake     emacs-camp.userFiles로 넣는 자신의 파일
   - git: magit, forge, 파일 버퍼마다 diff-hl
   - agent-shell
 
-  마지막으로 `custom.el`, `user/*.el`, `local.el`을 이 순서로 로드합니다.
+  마지막으로 `custom.el`, `ecamp-extras`에 지정한 extras, `user/*.el`,
+  `local.el`을 이 순서로 로드합니다.
 
 Nix 없이 `lisp/*.el`을 `~/.config/emacs/`에 복사해서 써도 됩니다. 그러면
 패키지는 배포할 때가 아니라 처음 실행할 때 설치됩니다. `user/`에 직접 넣은
@@ -80,7 +81,13 @@ inputs.emacs-camp = {
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.korean.enable = true;  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
+emacs-camp.extras = [ "10-prog" ];  # 코드 버퍼와 ielm에 무지개 괄호, eval 깜박임
 ```
+
+`extras/*.el`은 모두 `~/.config/emacs/extras/`에 배포되지만, `ecamp-extras`에
+이름이 있어야만 로드됩니다. `emacs-camp.extras`와 `korean.enable` 같은 옵션은 그 기본값만 정합니다
+(`extras-default.el`에 기록). 나중에 켜고 끄려면
+`M-x customize-variable RET ecamp-extras`를 쓰면 되고, `custom.el`에 저장됩니다.
 
 모듈이 basecamp에서 쓰는 것은 계약(`basecamp.emacs.package`,
 `.warmProgram`)뿐입니다. switch할 때마다 아래 작업을 합니다.
@@ -148,6 +155,9 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준. Linux에는 `
 ├── early-init.elc -> /nix/store/…-emacs-camp-config/early-init.elc
 ├── init.el        -> /nix/store/…-emacs-camp-config/init.el
 ├── init.elc       -> /nix/store/…-emacs-camp-config/init.elc
+├── extras-default.el(c) -> /nix/store/…   ecamp-extras의 기본값
+├── extras/
+│   └── 00-korean.el(c) -> /nix/store/…    모든 extra, 선택된 것만 로드
 ├── user/
 │   ├── fonts.el   -> /nix/store/…   emacs-camp.userFiles 항목마다 한 쌍
 │   └── fonts.elc  -> /nix/store/…
@@ -173,7 +183,7 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준. Linux에는 `
 
 | `~/.config/emacs/` 안의 경로 | 관리 주체 |
 |---|---|
-| `early-init.el(c)`, `init.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | 모듈 (store 링크) |
+| `early-init.el(c)`, `init.el(c)`, `extras-default.el(c)`, `extras/*.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | 모듈 (store 링크) |
 | `eln-cache/` | 위 파일들은 모듈, 패키지는 package.el. 다른 빌드의 하위 디렉터리는 패키지 sync가 정리 |
 | `elpa/`, `package-quickstart.el` | package.el |
 | `custom.el` | Custom |
@@ -195,10 +205,10 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
 - Emacs 31.1을 소스에서 빌드합니다. Debian의 Emacs는 너무 오래돼서 forge가
   요구하는 내장 compat 31이 없습니다. 터미널 빌드이고 native 컴파일은 하지
   않습니다.
-- `lisp/`는 `~/.config/emacs/`로, `extras/*.el`은 모두 `user/`로 들어갑니다.
-  모듈에서는 extras가 opt-in이라서, 한국어 기본 설정까지 전부 켜진 모습은 이
-  이미지에서 볼 수 있습니다. 빌드할 때 패키지를 설치하고, 모듈과 같은 방식으로
-  `init.el`과 `user/*.el`을 byte 컴파일합니다.
+- `lisp/`는 `~/.config/emacs/`로, `extras/`는 `~/.config/emacs/extras/`로
+  들어갑니다. 기본으로 로드되는 extra는 없고,
+  `M-x customize-variable RET ecamp-extras`로 켭니다. 빌드할 때 패키지를
+  설치하고, 모듈과 같은 방식으로 `init.el`과 `extras/*.el`을 byte 컴파일합니다.
 - GitHub Actions(`.github/workflows/image.yml`)가 main에서 `latest`를
   빌드합니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `Dockerfile`이
   바뀌는 push마다 돌고, MELPA 갱신을 받으려고 매일 18:00 UTC(03:00 KST)에도

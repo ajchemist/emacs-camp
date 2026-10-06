@@ -12,11 +12,11 @@
   outputs = { self, basecamp, ... }:
   let
     linuxHome = basecamp.lib.mkHome {
-      user = "fixture"; emacs = "nox"; modules = [ self.homeModules.default { emacs-camp.korean.enable = true; } ];
+      user = "fixture"; emacs = "nox"; modules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = [ "10-prog" ]; } ];
     };
     darwin = basecamp.lib.mkDarwin {
       user = "fixture"; emacs = "gui";
-      modules = [{ home-manager.sharedModules = [ self.homeModules.default { emacs-camp.korean.enable = true; } ]; }];
+      modules = [{ home-manager.sharedModules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = [ "10-prog" ]; } ]; }];
     };
     darwinHome = darwin.config.home-manager.users.fixture;
   in {

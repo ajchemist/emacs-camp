@@ -9,22 +9,29 @@ let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   elnWarm = "${config.basecamp.emacs.warmProgram}/bin/eln-warm";
   userNames = map baseNameOf cfg.userFiles;
+  extraNames = lib.attrNames (lib.filterAttrs (n: _: lib.hasSuffix ".el" n) (builtins.readDir ./extras));
+  extrasDefault = lib.optional cfg.korean.enable "00-korean" ++ cfg.extras;
 
   # Compiled by the same Emacs that loads it, so a broken init breaks the switch
   # instead of the next launch. compile.el turns :ensure off.
   compiled = pkgs.runCommand "emacs-camp-config" { nativeBuildInputs = [ emacs ]; } ''
-    mkdir user
+    mkdir user extras
     cp ${./lisp}/*.el .
+    cp ${./extras}/*.el extras/
+    echo ';;; -*- lexical-binding: t -*-' > extras-default.el
+    echo '(defvar ecamp-extras-default (quote (${lib.concatMapStringsSep " " (n: ''"${n}"'') extrasDefault})))' >> extras-default.el
     ${lib.concatMapStringsSep "\n" (f: "cp ${f} user/${baseNameOf f}") cfg.userFiles}
     emacs --batch \
       -l ${./compile.el} --eval '(setq byte-compile-error-on-warn t)' \
-      -f batch-byte-compile ./*.el ${lib.optionalString (cfg.userFiles != [ ]) "user/*.el"}
-    mkdir -p $out/user; cp ./*.el ./*.elc $out/
+      -f batch-byte-compile ./*.el extras/*.el ${lib.optionalString (cfg.userFiles != [ ]) "user/*.el"}
+    mkdir -p $out/user $out/extras; cp ./*.el ./*.elc $out/; cp extras/*.el extras/*.elc $out/extras/
     ${lib.optionalString (cfg.userFiles != [ ]) "cp user/*.el user/*.elc $out/user/"}
   '';
 
-  # All sources that get linked: early-init, init, user/*.
-  linked = [ "early-init" "init" ] ++ map (n: "user/${lib.removeSuffix ".el" n}") userNames;
+  # All sources that get linked: early-init, init, extras-default, extras/*, user/*.
+  linked = [ "early-init" "init" "extras-default" ]
+    ++ map (n: "extras/${lib.removeSuffix ".el" n}") extraNames
+    ++ map (n: "user/${lib.removeSuffix ".el" n}") userNames;
 in
 {
   options.emacs-camp = {
@@ -38,12 +45,16 @@ in
       default = [ ];
       description = "Downstream .el files, linked as ~/.config/emacs/user/<name> and loaded in name order after the core, before local.el.";
     };
-    korean.enable = lib.mkEnableOption "Korean defaults (extras/00-korean.el): hangul input on C-\\, UTF-8 over EUC-KR, hangul/hanja keys";
+    extras = lib.mkOption {
+      type = lib.types.listOf (lib.types.enum (map (lib.removeSuffix ".el") extraNames));
+      default = [ ];
+      example = [ "10-prog" ];
+      description = "extras/*.el (by name, no .el) that load by default. All are always deployed; M-x customize-variable ecamp-extras changes the choice later.";
+    };
+    korean.enable = lib.mkEnableOption "Korean defaults (extras/00-korean.el) loaded by default: hangul input on C-\\, UTF-8 over EUC-KR, hangul/hanja keys. Always deployed; M-x customize-variable ecamp-extras toggles it later";
   };
 
   config = lib.mkIf cfg.enable {
-    emacs-camp.userFiles = lib.mkIf cfg.korean.enable (lib.mkBefore [ ./extras/00-korean.el ]);
-
     assertions = [{
       assertion = config.basecamp.emacs.enable;
       message = "emacs-camp needs nix-basecamp's Emacs: set basecamp.emacs.enable where the install happens.";

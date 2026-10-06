@@ -1,6 +1,7 @@
 ;;; init.el --- emacs-camp  -*- lexical-binding: t -*-
 
-;; Files load in this order: this one, custom.el, user/*.el, local.el.
+;; Files load in this order: this one, custom.el, the chosen extras/*.el,
+;; user/*.el, local.el.
 ;; ~/.config/emacs is an ordinary directory. Emacs or the user writes elpa/,
 ;; eln-cache/, custom.el and local.el into it; emacs-camp never does.
 
@@ -211,6 +212,9 @@
 (use-package eros
   :hook (emacs-lisp-mode . eros-mode))
 
+;; Installed only; extras/10-prog.el turns it on (a taste, not a default).
+(use-package rainbow-delimiters)
+
 ;;; Git
 
 (use-package magit
@@ -253,6 +257,21 @@
 ;; unmanaged; it loads last so it can override everything.
 (defvar ecamp-load-source nil
   "Non-nil: load user/*.el as source (sync.el sets it so their :ensure runs).")
+
+;; extras/*.el are always deployed but load only when named in `ecamp-extras'.
+;; Its default comes from extras-default.el (the Home Manager module writes it
+;; from emacs-camp.korean.enable and the like); M-x customize-variable
+;; ecamp-extras overrides that default in custom.el. Rules: docs/adr/0001-extras.md.
+(load (locate-user-emacs-file "extras-default") 'noerror 'nomessage)
+(defvar ecamp-extras-default nil
+  "Extras the deploy turned on; the default of `ecamp-extras'.")
+(defcustom ecamp-extras ecamp-extras-default
+  "Names of extras/*.el to load at startup, e.g. (\"00-korean\")."
+  :type '(repeat string)
+  :group 'initialization)
+(dolist (name ecamp-extras)
+  (let ((f (locate-user-emacs-file (concat "extras/" name))))
+    (load (if ecamp-load-source (concat f ".el") f) 'noerror 'nomessage ecamp-load-source)))
 (let ((dir (locate-user-emacs-file "user")))
   (when (file-directory-p dir)
     (dolist (f (directory-files dir t "\\.el\\'"))

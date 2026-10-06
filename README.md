@@ -43,7 +43,8 @@ your flake     your own files through emacs-camp.userFiles
   - git with magit, forge, and diff-hl in each file buffer;
   - agent-shell.
 
-  Finally it loads `custom.el`, `user/*.el` and `local.el`, in that order.
+  Finally it loads `custom.el`, the extras named in `ecamp-extras`,
+  `user/*.el` and `local.el`, in that order.
 
 You can skip Nix and copy `lisp/*.el` into `~/.config/emacs/`. Packages then
 install on the first launch instead of at deploy time. To compile the files
@@ -80,7 +81,13 @@ inputs.emacs-camp = {
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.korean.enable = true;  # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys
+emacs-camp.extras = [ "10-prog" ];  # rainbow parens and eval flash in code buffers and ielm
 ```
+
+Every `extras/*.el` is deployed to `~/.config/emacs/extras/`, but none loads
+unless named in `ecamp-extras`. `emacs-camp.extras` and options like `korean.enable` only set its
+default (written to `extras-default.el`). Turn extras on or off later with
+`M-x customize-variable RET ecamp-extras`, which saves to `custom.el`.
 
 The module depends on nothing from basecamp beyond its contract
 (`basecamp.emacs.package`, `.warmProgram`). Every switch does the following:
@@ -149,6 +156,9 @@ and no `Applications/`):
 ├── early-init.elc -> /nix/store/…-emacs-camp-config/early-init.elc
 ├── init.el        -> /nix/store/…-emacs-camp-config/init.el
 ├── init.elc       -> /nix/store/…-emacs-camp-config/init.elc
+├── extras-default.el(c) -> /nix/store/…   default of ecamp-extras
+├── extras/
+│   └── 00-korean.el(c) -> /nix/store/…    every extra, loaded only if chosen
 ├── user/
 │   ├── fonts.el   -> /nix/store/…   one pair per emacs-camp.userFiles entry
 │   └── fonts.elc  -> /nix/store/…
@@ -174,7 +184,7 @@ and no `Applications/`):
 
 | Path in `~/.config/emacs/` | Owner |
 |---|---|
-| `early-init.el(c)`, `init.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | module (store links) |
+| `early-init.el(c)`, `init.el(c)`, `extras-default.el(c)`, `extras/*.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | module (store links) |
 | `eln-cache/` | module for the files above, package.el for packages; the package sync prunes other builds' subdirectories |
 | `elpa/`, `package-quickstart.el` | package.el |
 | `custom.el` | Custom |
@@ -195,10 +205,10 @@ would load all packages at startup.
 
 - Emacs 31.1, built from source because Debian's Emacs is too old (forge needs
   the built-in compat 31). It is a terminal build without native compilation.
-- `lisp/` goes to `~/.config/emacs/`, and every `extras/*.el` goes to `user/`.
-  The extras are opt-in under the module, so the image is the place to see all
-  of them on, Korean defaults included. The build installs packages and
-  byte-compiles `init.el` and `user/*.el`, as the module does.
+- `lisp/` goes to `~/.config/emacs/` and `extras/` to `~/.config/emacs/extras/`.
+  No extra loads by default; turn one on with
+  `M-x customize-variable RET ecamp-extras`. The build installs packages and
+  byte-compiles `init.el` and `extras/*.el`, as the module does.
 - GitHub Actions (`.github/workflows/image.yml`) builds `latest` from main.
   It runs on every push that touches `lisp/`, `extras/`, `sync.el`,
   `compile.el` or `Dockerfile`, and nightly at 18:00 UTC to pick up MELPA
