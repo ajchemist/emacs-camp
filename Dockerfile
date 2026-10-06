@@ -23,6 +23,6 @@ COPY --chown=user:user lisp/ .config/emacs/
 COPY --chown=user:user extras/ .config/emacs/user/
 COPY sync.el /tmp/sync.el
 RUN emacs --batch -l /tmp/sync.el \
- && cd .config/emacs && emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' -f batch-byte-compile early-init.el init.el
+ && cd .config/emacs && emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' -f batch-byte-compile early-init.el init.el user/*.el
 ENV TERM=xterm-256color LANG=C.UTF-8
 CMD ["emacs"]
