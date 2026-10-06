@@ -2,7 +2,7 @@
 
 [![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
-[![Demo image](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml)
+[![Image](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml)
 
 English · [한국어](README.ko.md)
 
@@ -16,8 +16,8 @@ cares about what runs on top of it.
 **Try it in a browser:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)
 opens a terminal with emacs-camp already installed (Emacs 31, terminal build);
 type `emacs`. It needs a free Killercoda account, and a session lasts an hour.
-The image is `ghcr.io/ajchemist/emacs-camp-demo` (`demo/Dockerfile`, rebuilt
-weekly), so `docker run --rm -it ghcr.io/ajchemist/emacs-camp-demo` works
+The image is `ghcr.io/ajchemist/emacs-camp` (`Dockerfile`, rebuilt
+weekly), so `docker run --rm -it ghcr.io/ajchemist/emacs-camp` works
 locally too.
 
 ```

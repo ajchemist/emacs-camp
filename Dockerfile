@@ -1,4 +1,4 @@
-# emacs-camp demo image (ghcr.io/ajchemist/emacs-camp-demo): `docker run -it`
+# emacs-camp image (ghcr.io/ajchemist/emacs-camp): `docker run -it`
 # drops you into a shell with emacs-camp installed. The Killercoda scenario
 # runs it. Emacs 31.1 is built from source: distro Emacs is too old for the
 # package set (forge needs the built-in compat 31).

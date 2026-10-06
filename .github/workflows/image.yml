@@ -1,10 +1,10 @@
-name: Demo image
+name: Image
 
-# ghcr.io/ajchemist/emacs-camp-demo, which the Killercoda scenario runs.
+# ghcr.io/ajchemist/emacs-camp, which the Killercoda scenario runs.
 on:
   push:
     branches: [main]
-    paths: [lisp/**, sync.el, demo/**, .github/workflows/demo-image.yml]
+    paths: [lisp/**, sync.el, Dockerfile, .github/workflows/image.yml]
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * 1" # weekly, so MELPA packages stay fresh
@@ -25,6 +25,6 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: demo/Dockerfile
+          file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/emacs-camp-demo:latest
+          tags: ghcr.io/${{ github.repository_owner }}/emacs-camp:latest

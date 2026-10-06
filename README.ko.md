@@ -2,7 +2,7 @@
 
 [![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
-[![Demo image](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml)
+[![Image](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml)
 
 [English](README.md) · 한국어
 
@@ -15,8 +15,8 @@ emacs-camp는 init을 작게 두면서도 패키지는 넉넉히 쓰는 Emacs �
 **브라우저에서 써 보기:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)를
 열면 emacs-camp가 설치된 터미널이 뜹니다(Emacs 31, 터미널 빌드). `emacs`를
 입력하면 됩니다. 무료 Killercoda 계정이 필요하고 세션은 1시간입니다. 이미지는
-`ghcr.io/ajchemist/emacs-camp-demo`(`demo/Dockerfile`, 매주 다시 빌드)이므로
-로컬에서도 `docker run --rm -it ghcr.io/ajchemist/emacs-camp-demo`로 실행할 수
+`ghcr.io/ajchemist/emacs-camp`(`Dockerfile`, 매주 다시 빌드)이므로
+로컬에서도 `docker run --rm -it ghcr.io/ajchemist/emacs-camp`로 실행할 수
 있습니다.
 
 ```
