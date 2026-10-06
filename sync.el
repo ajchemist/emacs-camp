@@ -18,6 +18,18 @@
 ;; byte-compilation and omits it from the output, so init.elc and user/*.elc
 ;; can't install. Reading the source expands the macros here, :ensure and all.
 (defvar ecamp-load-source t)
+;; The archive index is fetched once, and installing everything takes
+;; minutes. If MELPA rebuilds a package meanwhile, the old tarball is gone
+;; (404) and :ensure only warns. Still missing afterwards: refetch, retry once.
+(setq use-package-ensure-function
+      (lambda (name args state &rest r)
+        (apply #'use-package-ensure-elpa name args state r)
+        (dolist (e args)
+          (let ((p (if (eq e t) (use-package-as-symbol name) e)))
+            (when (consp p) (setq p (car p)))
+            (when (and p (not (package-installed-p p)))
+              (package-refresh-contents)
+              (apply #'use-package-ensure-elpa name args state r))))))
 (load (locate-user-emacs-file "init.el") nil t t)
 (ecamp-sync-phase "install")
 
