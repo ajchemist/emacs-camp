@@ -60,7 +60,7 @@ inputs.emacs-camp = {
 # basecamp.lib.mkDarwin / mkHome으로 만든 home, basecamp.emacs.enable = true에서:
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
-emacs-camp.korean.enable = true;  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키, 한글 글꼴
+emacs-camp.korean.enable = true;  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
 ```
 
 모듈이 basecamp에서 가져다 쓰는 것은 계약(`basecamp.emacs.package`,

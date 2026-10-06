@@ -20,16 +20,4 @@
 (keymap-global-set "<Hangul_Hanja>" #'hangul-to-hanja-conversion)
 (keymap-global-set "<f9>" #'hangul-to-hanja-conversion)
 
-;; GUI frames: a hangul font for hangul, whatever the default font is.
-(defun ecamp-korean-font (&optional _frame)
-  "Use the first installed hangul font for the hangul script."
-  (when (display-graphic-p)
-    (when-let* ((family (seq-find (lambda (f) (find-font (font-spec :family f)))
-                                  '("Apple SD Gothic Neo" "D2Coding"
-                                    "Noto Sans CJK KR" "NanumGothicCoding"
-                                    "Malgun Gothic"))))
-      (set-fontset-font t 'hangul (font-spec :family family)))))
-(ecamp-korean-font)
-(add-hook 'after-make-frame-functions #'ecamp-korean-font)
-
 ;;; 00-korean.el ends here

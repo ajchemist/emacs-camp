@@ -39,7 +39,7 @@ in
       default = [ ];
       description = "Downstream .el files, linked as ~/.config/emacs/user/<name> and loaded in name order after the core, before local.el.";
     };
-    korean.enable = lib.mkEnableOption "Korean defaults (extras/00-korean.el): hangul input on C-\\, UTF-8 over EUC-KR, hangul/hanja keys, a hangul font";
+    korean.enable = lib.mkEnableOption "Korean defaults (extras/00-korean.el): hangul input on C-\\, UTF-8 over EUC-KR, hangul/hanja keys";
   };
 
   config = lib.mkIf cfg.enable {
