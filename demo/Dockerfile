@@ -1,0 +1,24 @@
+# emacs-camp demo image (ghcr.io/ajchemist/emacs-camp-demo): `docker run -it`
+# drops you into a shell with emacs-camp installed. The Killercoda scenario
+# runs it. Emacs 31.1 is built from source: distro Emacs is too old for the
+# package set (forge needs the built-in compat 31).
+FROM debian:trixie-slim AS emacs
+RUN apt-get update && apt-get -y install --no-install-recommends \
+      build-essential pkg-config curl ca-certificates libgnutls28-dev libncurses-dev zlib1g-dev libtree-sitter-dev \
+ && curl -sSfL https://mirrors.kernel.org/gnu/emacs/emacs-31.1.tar.gz | tar xz -C /tmp \
+ && cd /tmp/emacs-31.1 && ./configure --without-x --without-sound --without-makeinfo --without-native-compilation \
+ && make -j"$(nproc)" && make install
+
+FROM debian:trixie-slim
+RUN apt-get update && apt-get -y install --no-install-recommends \
+      ca-certificates git less libgnutls30t64 libncursesw6 libtree-sitter0.22 \
+ && rm -rf /var/lib/apt/lists/* && useradd -m -s /bin/bash user
+COPY --from=emacs /usr/local /usr/local
+USER user
+WORKDIR /home/user
+COPY --chown=user:user lisp/ .config/emacs/
+COPY sync.el /tmp/sync.el
+RUN emacs --batch -l /tmp/sync.el \
+ && cd .config/emacs && emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' -f batch-byte-compile early-init.el init.el
+ENV TERM=xterm-256color LANG=C.UTF-8
+CMD ["emacs"]
