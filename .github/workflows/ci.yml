@@ -68,7 +68,10 @@ jobs:
         env:
           V: ${{ needs.lint.outputs.emacs-version }}
         run: |
-          curl -sSfL -o "$RUNNER_TEMP/emacs.zip" "https://ftpmirror.gnu.org/emacs/windows/emacs-${V%%.*}/emacs-$V.zip"
+          # ftpmirror.gnu.org (the redirector) is at times unreachable from runners.
+          f="emacs/windows/emacs-${V%%.*}/emacs-$V.zip"
+          curl -sSfL --connect-timeout 20 -o "$RUNNER_TEMP/emacs.zip" "https://ftpmirror.gnu.org/$f" \
+            || curl -sSfL -o "$RUNNER_TEMP/emacs.zip" "https://ftp.gnu.org/gnu/$f"
           unzip -q "$RUNNER_TEMP/emacs.zip" -d /c/emacs
           echo 'C:\emacs\bin' >> "$GITHUB_PATH"
       - name: Lay out an init directory
