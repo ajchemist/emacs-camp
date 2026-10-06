@@ -3,7 +3,17 @@ name: CI
 on:
   push:
     branches: [main]
+    paths: &code
+      # What CI exercises; docs and notes alone do not start a run.
+      - lisp/**
+      - ci/**
+      - sync.el
+      - module.nix
+      - flake.nix
+      - flake.lock
+      - .github/workflows/ci.yml
   pull_request:
+    paths: *code
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * 1" # weekly: MELPA moves under us
@@ -14,8 +24,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
       - name: Evaluate all outputs
         run: nix flake check --all-systems --no-build
       - name: Byte-compile lisp/ against basecamp's Emacs (module check)
@@ -37,10 +47,19 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: jcs090218/setup-emacs@master
+      - uses: actions/checkout@v7
+      # purcell/setup-emacs is plain shell; jcs090218/setup-emacs would add a
+      # Node 20 action on Windows, so Windows takes GNU's own build instead.
+      - uses: purcell/setup-emacs@master
+        if: runner.os != 'Windows'
         with:
           version: "30.2"
+      - name: Install Emacs (Windows, GNU build)
+        if: runner.os == 'Windows'
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/emacs.zip" https://ftpmirror.gnu.org/emacs/windows/emacs-30/emacs-30.2.zip
+          unzip -q "$RUNNER_TEMP/emacs.zip" -d /c/emacs
+          echo 'C:\emacs\bin' >> "$GITHUB_PATH"
       - name: Lay out an init directory
         run: |
           d="$RUNNER_TEMP/emacs.d"; mkdir -p "$d"; cp lisp/*.el "$d/"
@@ -51,7 +70,7 @@ jobs:
       # MELPA download; the weekly cron run starts empty so drift still shows.
       - name: Cache elpa/
         if: github.event_name != 'schedule'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.D }}/elpa
           key: elpa-${{ matrix.os }}-${{ hashFiles('lisp/*.el') }}-${{ env.WEEK }}
@@ -70,6 +89,8 @@ jobs:
         # the sync generated next to them.
         run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
       - name: Smoke
+        env:
+          ECAMP_SMOKE_LABEL: runtime ${{ matrix.os }}
         run: emacs --batch --init-directory "$D" -l ci/smoke.el
       - name: agent-shell E2E (mock ACP agent)
         run: emacs --batch --init-directory "$D" -l ci/agent-shell-e2e.el
@@ -83,11 +104,13 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
       - name: Deploy onto the runner
         run: ./ci/e2e-deploy.sh
       - name: Smoke (deployed config)
+        env:
+          ECAMP_SMOKE_LABEL: deployed ${{ matrix.os }}
         run: '"$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/smoke.el'
       - name: agent-shell E2E (mock ACP agent)
         run: '"$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/agent-shell-e2e.el'
@@ -104,9 +127,9 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: env.ANTHROPIC_API_KEY != ''
-      - uses: jcs090218/setup-emacs@master
+      - uses: purcell/setup-emacs@master
         if: env.ANTHROPIC_API_KEY != ''
         with:
           version: "30.2"

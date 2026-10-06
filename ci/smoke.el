@@ -11,12 +11,32 @@
   (unless ok (setq smoke-failures (1+ smoke-failures))))
 
 (defvar smoke-init-seconds)
-(let ((t0 (float-time)))
+(defvar smoke-init-features)
+(defvar smoke-init-gcs)
+(let ((t0 (float-time)) (f0 features))
   (load (locate-user-emacs-file "early-init") nil t)
   (package-activate-all)
   (load (locate-user-emacs-file "init") nil t)
-  (setq smoke-init-seconds (- (float-time) t0))
+  (setq smoke-init-seconds (- (float-time) t0)
+        smoke-init-features (length (seq-difference features f0))
+        smoke-init-gcs gcs-done)
   (message "init (batch emulation): %.3fs" smoke-init-seconds))
+
+;; Child mode (ECAMP_LOAD_ONE=PKG): after the same init, time the first
+;; `require' of one package and print one line for the parent's report. A
+;; fresh process per package, so what an earlier package dragged in never
+;; makes a later one look cheap.
+(let ((one (getenv "ECAMP_LOAD_ONE")))
+  (when (and one (not (string-empty-p one)))
+    (let ((pkg (intern one)) (f0 features) (t0 (float-time)))
+      (if (featurep pkg)
+          (princ (format "LOADONE %s init 0 0\n" pkg))
+        (condition-case e
+            (progn (require pkg)
+                   (princ (format "LOADONE %s ok %.3f %d\n" pkg (- (float-time) t0)
+                                  (length (seq-difference features f0)))))
+          (error (princ (format "LOADONE %s error 0 0 %S\n" pkg e))))))
+    (kill-emacs 0)))
 
 ;; Init stays light: a time budget (ECAMP_INIT_BUDGET seconds, default 1.5,
 ;; loose enough for cold CI runners) and, sharper, the heavy libraries that
@@ -24,10 +44,6 @@
 (let ((budget (string-to-number (or (getenv "ECAMP_INIT_BUDGET") "1.5"))))
   (smoke "init within budget" (< smoke-init-seconds budget)
          (format "%.3fs < %.1fs" smoke-init-seconds budget)))
-(let ((summary (getenv "GITHUB_STEP_SUMMARY")))
-  (when (and summary (not (string-empty-p summary)))
-    (write-region (format "| %s init (batch emulation) | %.3fs |\n" system-type smoke-init-seconds)
-                  nil summary 'append 'silent)))
 (let ((loaded (seq-filter #'featurep
                           '(magit forge transient consult embark embark-consult
                             diff-hl vc vc-git diff-mode log-edit
@@ -99,5 +115,60 @@
 (let ((t1 (float-time)))
   (require 'agent-shell)
   (message "first agent-shell load: %.3fs" (- (float-time) t1)))
+
+;; Report: init, then each use-package package loaded on its own after init.
+;; Printed to the log; also the job summary under GitHub Actions.
+(defun smoke-packages ()
+  "The packages init.el declares, in order."
+  (with-temp-buffer
+    (insert-file-contents (locate-user-emacs-file "init.el"))
+    (let (pkgs)
+      (while (re-search-forward "^(use-package \\([^ \n)]+\\)" nil t)
+        (push (intern (match-string 1)) pkgs))
+      (nreverse pkgs))))
+
+(defun smoke-load-one (pkg)
+  "Load PKG after init in a fresh Emacs; return (STATUS SECONDS FEATURES ERROR)."
+  (with-temp-buffer
+    (let ((process-environment (cons (format "ECAMP_LOAD_ONE=%s" pkg) process-environment)))
+      (call-process (expand-file-name invocation-name invocation-directory) nil t nil
+                    "--batch" "--init-directory" user-emacs-directory "-l" smoke-file))
+    (goto-char (point-min))
+    (if (re-search-forward "^LOADONE [^ ]+ \\([a-z]+\\) \\([0-9.]+\\) \\([0-9]+\\) ?\\(.*\\)$" nil t)
+        (list (match-string 1) (string-to-number (match-string 2))
+              (string-to-number (match-string 3)) (match-string 4))
+      (list "error" 0 0 (string-trim (buffer-string))))))
+
+(defvar smoke-file (or load-file-name buffer-file-name))
+(let* ((budget (string-to-number (or (getenv "ECAMP_LOAD_BUDGET") "2.0")))
+       (label (or (getenv "ECAMP_SMOKE_LABEL") (format "%s" system-type)))
+       (rows nil))
+  (dolist (pkg (smoke-packages))
+    (if (not (or (featurep pkg) (locate-library (symbol-name pkg))))
+        (push (format "| `%s` | not installed here (`:if`) | | | |" pkg) rows)
+      (pcase-let ((`(,status ,secs ,feats ,err) (smoke-load-one pkg)))
+        (pcase status
+          ("init" (push (format "| `%s` | at startup (`:demand`) | | | ok |" pkg) rows))
+          ("ok" (smoke (format "%s loads after init" pkg) (< secs budget)
+                       (format "%.3fs, %d features" secs feats))
+                (push (format "| `%s` | on first use | %.3f | %d | %s |" pkg secs feats
+                              (if (< secs budget) "ok" (format "**slow** (> %.1fs)" budget)))
+                      rows))
+          (_ (smoke (format "%s loads after init" pkg) nil err)
+             (push (format "| `%s` | on first use | | | **error** `%s` |" pkg err) rows))))))
+  (let ((report
+         (concat
+          (format "### smoke: %s (Emacs %s)\n\n" label emacs-version)
+          "| init (batch emulation) | features loaded | GCs | budget |\n|---|---|---|---|\n"
+          (format "| %.3fs | %d | %d | %.1fs |\n\n" smoke-init-seconds smoke-init-features
+                  smoke-init-gcs (string-to-number (or (getenv "ECAMP_INIT_BUDGET") "1.5")))
+          (format "Each package below is required in a fresh Emacs after init (budget %.1fs).\n\n" budget)
+          "| package | loads | first load (s) | features pulled in | |\n|---|---|---:|---:|---|\n"
+          (mapconcat #'identity (nreverse rows) "\n") "\n\n"
+          (format "%d check(s) failed.\n\n" smoke-failures)))
+        (summary (getenv "GITHUB_STEP_SUMMARY")))
+    (message "\n%s" report)
+    (when (and summary (not (string-empty-p summary)))
+      (write-region report nil summary 'append 'silent))))
 
 (kill-emacs (if (zerop smoke-failures) 0 1))
