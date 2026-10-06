@@ -1,6 +1,7 @@
-;;; korean.el --- emacs-camp: Korean input and text  -*- lexical-binding: t -*-
+;;; 00-korean.el --- emacs-camp: Korean input and text  -*- lexical-binding: t -*-
 
-;; Loaded as user/korean.el when emacs-camp.korean.enable is set.
+;; Loaded as user/00-korean.el when emacs-camp.korean.enable is set: first of
+;; the user files, so a downstream file can override anything here.
 
 ;; The Korean language environment gives C-\ the 2-beolsik hangul input
 ;; method, but it also prefers EUC-KR; put UTF-8 back on top so new files,
@@ -31,4 +32,4 @@
 (ecamp-korean-font)
 (add-hook 'after-make-frame-functions #'ecamp-korean-font)
 
-;;; korean.el ends here
+;;; 00-korean.el ends here
