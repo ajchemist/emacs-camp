@@ -1,6 +1,6 @@
 # emacs-camp
 
-[![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/playground)
+[![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
 [![Demo image](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml)
 
@@ -13,7 +13,7 @@ loads. Emacs itself comes from
 [nix-basecamp](https://github.com/ajchemist/nix-basecamp); this repository only
 cares about what runs on top of it.
 
-**Try it in a browser:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/playground)
+**Try it in a browser:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)
 opens a terminal with emacs-camp already installed (Emacs 31, terminal build);
 type `emacs`. It needs a free Killercoda account, and a session lasts an hour.
 The image is `ghcr.io/ajchemist/emacs-camp-demo` (`demo/Dockerfile`, rebuilt
