@@ -1,5 +1,9 @@
 # emacs-camp
 
+[![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/playground)
+[![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
+[![Demo image](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/demo-image.yml)
+
 [English](README.md) · 한국어
 
 emacs-camp는 init을 작게 두면서도 패키지는 넉넉히 쓰는 Emacs 런타임입니다.
