@@ -206,10 +206,10 @@
          ("RET" . nil)
          ("C-j" . paredit-newline)))
 
-;; Each nesting level gets its own color.
-(use-package rainbow-delimiters
-  :hook ((emacs-lisp-mode lisp-mode lisp-interaction-mode scheme-mode
-          clojure-mode ielm-mode) . rainbow-delimiters-mode))
+;; Elisp eval results (C-x C-e, C-M-x) show inline at point, as CIDER does.
+;; eros-mode is global; the first elisp buffer turns it on.
+(use-package eros
+  :hook (emacs-lisp-mode . eros-mode))
 
 ;;; Git
 

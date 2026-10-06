@@ -38,7 +38,7 @@ your flake     emacs-camp.userFiles로 넣는 자신의 파일
   - 완성: vertico, savehist, orderless, marginalia, consult, embark,
     embark-consult. 버퍼 안에서는 corfu와 cape
   - dirvish. dired가 처음 로드될 때 dired를 대신합니다
-  - Lisp 버퍼의 paredit과 rainbow-delimiters
+  - Lisp 버퍼의 paredit, elisp eval 결과를 인라인으로 보여주는 eros
   - git: magit, forge, 파일 버퍼마다 diff-hl
   - agent-shell
 

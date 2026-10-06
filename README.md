@@ -39,7 +39,7 @@ your flake     your own files through emacs-camp.userFiles
   - completion with vertico, savehist, orderless, marginalia, consult, embark
     and embark-consult, plus corfu and cape inside buffers;
   - dirvish, which replaces dired the first time dired loads;
-  - paredit and rainbow-delimiters in Lisp buffers;
+  - paredit in Lisp buffers, eros for inline elisp eval results;
   - git with magit, forge, and diff-hl in each file buffer;
   - agent-shell.
 
