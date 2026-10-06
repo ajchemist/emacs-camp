@@ -62,9 +62,15 @@
 (dolist (p '(vertico orderless marginalia consult embark embark-consult corfu cape
              magit forge diff-hl))
   (smoke (format "%s installed" p) (package-installed-p p)))
-(smoke "vertico/marginalia/corfu modes on"
-       (and (bound-and-true-p vertico-mode) (bound-and-true-p marginalia-mode)
-            (bound-and-true-p global-corfu-mode)))
+;; The completion UI waits for the first command (ecamp-completion-ui).
+(smoke "completion UI not loaded at init"
+       (not (seq-some #'featurep '(vertico marginalia corfu cape orderless))))
+(smoke "completion UI armed on pre-command-hook" (memq 'ecamp-completion-ui (default-value 'pre-command-hook)))
+(run-hooks 'pre-command-hook)           ; what the first keystroke does
+(smoke "first command turns the completion UI on"
+       (and (bound-and-true-p vertico-mode) (bound-and-true-p savehist-mode)
+            (bound-and-true-p marginalia-mode) (bound-and-true-p global-corfu-mode)))
+(smoke "completion UI hook removes itself" (not (memq 'ecamp-completion-ui (default-value 'pre-command-hook))))
 (smoke "orderless completion style" (memq 'orderless completion-styles))
 (smoke "magit deferred (not loaded at init)" (not (featurep 'magit)))
 (smoke "agent-shell installed" (package-installed-p 'agent-shell))

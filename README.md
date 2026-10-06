@@ -177,14 +177,17 @@ way Emacs does and verifies that:
 - init stays light: it finishes within `ECAMP_INIT_BUDGET` seconds (1.5 by
   default; the measurement is written to the job summary), and magit, forge,
   transient, consult, embark, diff-hl, vc, org and agent-shell are all still
-  unloaded after startup;
+  unloaded after startup. Neither is the completion UI (vertico, savehist,
+  marginalia, orderless, corfu, cape): `ecamp-completion-ui` turns it on
+  from `pre-command-hook` at the first command, then removes itself;
 - packages load when first used: `C-x g` brings in magit (and forge after
   it), `M-s l` brings in consult, `C-.` brings in embark (with
   embark-consult), and opening a file inside a git repository enables
   diff-hl, corfu and the cape capfs.
-- every `use-package` package loads after init without error and within
-  `ECAMP_LOAD_BUDGET` seconds (2.0 by default), each timed in its own fresh
-  Emacs so nothing loaded earlier makes it look cheap. The job summary gets a
+- every `use-package` package loads after init without error, each timed in
+  its own fresh Emacs so nothing loaded earlier makes it look cheap. Taking
+  longer than `ECAMP_LOAD_BUDGET` seconds (2.0 by default) adds a warning
+  annotation rather than failing, since shared runners are noisy. The job summary gets a
   table per job: init time, features and GCs at startup, then each package
   with when it loads, its first-load time and how many features it pulls in.
 

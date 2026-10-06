@@ -101,26 +101,38 @@
 ;; completion-at-point and cape contributes extra capfs.
 
 (use-package vertico
-  :demand t
-  :functions vertico-mode
-  :config (vertico-mode 1))
+  :functions vertico-mode)
 
 (use-package savehist                   ; history that vertico sorts by
-  :ensure nil
-  :demand t
-  :config (savehist-mode 1))
+  :ensure nil)
 
-(use-package orderless
-  :demand t
+;; Nothing at startup reads from the minibuffer or completes in a buffer, so
+;; the completion UI loads on the first command instead: pre-command-hook runs
+;; before M-x and friends call completing-read (minibuffer-setup-hook would be
+;; too late for vertico), and before the first keystroke that could complete.
+;; corfu stays global (eshell, comint, ... included), only enabled later.
+;; If startup code ever does use the minibuffer (desktop restore, a prompt in
+;; user/*.el or local.el), give these packages `:demand t' and `:config' that
+;; enables their modes, and drop this hook. Otherwise that prompt gets the
+;; default UI, and savehist loads the history file over the history it has
+;; just recorded.
+(defun ecamp-completion-ui ()
+  "Enable savehist, vertico, marginalia and corfu once, before the first command."
+  (remove-hook 'pre-command-hook #'ecamp-completion-ui)
+  (savehist-mode 1)
+  (vertico-mode 1)
+  (marginalia-mode 1)
+  (global-corfu-mode 1))
+(add-hook 'pre-command-hook #'ecamp-completion-ui)
+
+(use-package orderless                  ; its autoloads register the style
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
 (use-package marginalia
-  :demand t
-  :functions marginalia-mode
-  :config (marginalia-mode 1))
+  :functions marginalia-mode)
 
 (use-package consult
   :bind (([remap switch-to-buffer] . consult-buffer)
@@ -148,17 +160,14 @@
   :hook (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package corfu
-  :demand t
   :functions global-corfu-mode
   :custom
   (corfu-auto t)
-  (corfu-cycle t)
-  :config (global-corfu-mode 1))
+  (corfu-cycle t))
 
-(use-package cape
-  :demand t
+(use-package cape                       ; capfs are autoloaded
   :functions cape-dabbrev cape-file
-  :config
+  :init
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file))
 

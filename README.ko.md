@@ -170,13 +170,17 @@ CI(`.github/workflows/ci.yml`)에는 lint 작업, ubuntu·macOS·Windows에서 �
 
 - init이 가벼운지: `ECAMP_INIT_BUDGET`초(기본 1.5, 측정값은 job summary에
   기록) 안에 끝나고, 시작 직후 magit, forge, transient, consult, embark,
-  diff-hl, vc, org, agent-shell이 하나도 로드되어 있지 않은지.
+  diff-hl, vc, org, agent-shell이 하나도 로드되어 있지 않은지. 완성
+  UI(vertico, savehist, marginalia, orderless, corfu, cape)도 마찬가지로,
+  첫 명령 때 `pre-command-hook`의 `ecamp-completion-ui`가 켜고 훅에서
+  스스로 빠지는지.
 - 처음 쓸 때 로드되는지: `C-x g`를 누르면 magit이(이어서 forge도), `M-s l`이면
   consult가, `C-.`이면 embark가(embark-consult와 함께) 올라오고, git 저장소
   안의 파일을 열면 diff-hl, corfu, cape capf가 켜지는지.
-- `use-package` 패키지 하나하나가 init 뒤에 에러 없이 `ECAMP_LOAD_BUDGET`초
-  (기본 2.0) 안에 로드되는지. 앞서 로드된 것의 덕을 보지 않도록 패키지마다
-  새 Emacs에서 잽니다. job summary에는 작업마다 표가 남습니다. init 시간,
+- `use-package` 패키지 하나하나가 init 뒤에 에러 없이 로드되는지. 앞서 로드된
+  것의 덕을 보지 않도록 패키지마다 새 Emacs에서 잽니다. `ECAMP_LOAD_BUDGET`초
+  (기본 2.0)를 넘기면 실패가 아니라 warning annotation을 남깁니다. 공유
+  러너는 편차가 크기 때문입니다. job summary에는 작업마다 표가 남습니다. init 시간,
   시작 시 로드된 feature 수와 GC 횟수, 그리고 패키지별로 언제 로드되는지,
   첫 로딩 시간, 함께 딸려오는 feature 수입니다.
 
