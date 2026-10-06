@@ -68,10 +68,12 @@ jobs:
         env:
           V: ${{ needs.lint.outputs.emacs-version }}
         run: |
-          # ftpmirror.gnu.org (the redirector) is at times unreachable from runners.
+          # GNU's own hosts (the ftpmirror redirector, ftp.gnu.org) go down at
+          # times; try them, then fixed mirrors.
           f="emacs/windows/emacs-${V%%.*}/emacs-$V.zip"
-          curl -sSfL --connect-timeout 20 -o "$RUNNER_TEMP/emacs.zip" "https://ftpmirror.gnu.org/$f" \
-            || curl -sSfL -o "$RUNNER_TEMP/emacs.zip" "https://ftp.gnu.org/gnu/$f"
+          for m in https://ftpmirror.gnu.org https://ftp.gnu.org/gnu https://mirrors.kernel.org/gnu https://mirror.csclub.uwaterloo.ca/gnu; do
+            curl -sSfL --connect-timeout 15 -o "$RUNNER_TEMP/emacs.zip" "$m/$f" && break
+          done
           unzip -q "$RUNNER_TEMP/emacs.zip" -d /c/emacs
           echo 'C:\emacs\bin' >> "$GITHUB_PATH"
       - name: Lay out an init directory
