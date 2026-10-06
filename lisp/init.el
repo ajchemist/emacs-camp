@@ -171,6 +171,10 @@
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file))
 
+;; macOS /bin/ls has no --dired; GNU ls from coreutils ships as gls there.
+(when-let* ((gls (executable-find "gls")))
+  (setq insert-directory-program gls))
+
 ;;; Git
 
 (use-package magit
