@@ -4,7 +4,7 @@ name: Image
 on:
   push:
     branches: [main]
-    paths: [lisp/**, extras/**, sync.el, Dockerfile, .github/workflows/image.yml]
+    paths: [lisp/**, extras/**, sync.el, compile.el, Dockerfile, .github/workflows/image.yml]
   workflow_dispatch:
   schedule:
     - cron: "0 18 * * *" # nightly (03:00 KST) from main HEAD, so MELPA packages stay fresh
