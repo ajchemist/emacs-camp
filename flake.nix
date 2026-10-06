@@ -17,8 +17,8 @@
     homeModules.default = ./module.nix;
     homeModules.emacs-camp = ./module.nix;
 
-    # A home on each platform with basecamp's Emacs and this module; building
-    # it byte-compiles lisp/ against that Emacs (warnings are errors).
+    # Per platform, a home using basecamp's Emacs plus this module; the build
+    # byte-compiles lisp/ with that Emacs and fails on warnings.
     checks = {
       x86_64-linux.home = linuxHome.activationPackage;
       aarch64-darwin.home = darwinHome.home.activationPackage;

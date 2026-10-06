@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""A minimal ACP agent over stdio (newline-delimited JSON-RPC 2.0), for CI.
+"""Tiny ACP agent for CI, speaking newline-delimited JSON-RPC 2.0 on stdio.
 
-Answers initialize / session/new, and replies to every session/prompt with
-one agent_message_chunk "PONG: <prompt text>" followed by end_turn. Any other
-request gets an empty result; notifications are ignored. No network, no keys.
+Handles initialize and session/new. For each session/prompt it sends a single
+agent_message_chunk "PONG: <prompt text>" and then end_turn. Other requests
+return an empty result and notifications are dropped. Offline, keyless.
 """
 import json
 import sys
@@ -20,7 +20,7 @@ for line in sys.stdin:
         continue
     msg = json.loads(line)
     method, mid, params = msg.get("method"), msg.get("id"), msg.get("params") or {}
-    if mid is None or method is None:  # notification, or a response to us
+    if mid is None or method is None:  # a notification or a reply to something we sent
         continue
     if method == "initialize":
         result = {"protocolVersion": params.get("protocolVersion", 1),

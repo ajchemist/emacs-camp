@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Deploy emacs-camp for real onto the CI runner, the way a downstream does:
-# nix-basecamp's builder + this module, for the runner's own user.
+# Actually install emacs-camp on the CI runner the same way a downstream would,
+# using nix-basecamp's builder plus this module for the runner's user.
 #   Linux: basecamp.lib.mkHome (emacs = nox) -> activate Home Manager.
 #   macOS: basecamp.lib.mkDarwin (emacs = gui) -> activate nix-darwin (sudo).
-# Then waits for the background package sync and prints where things landed.
+# After that, wait for the background package sync and list the result.
 set -euo pipefail
 user="$(id -un)"
 flake="$(pwd)"

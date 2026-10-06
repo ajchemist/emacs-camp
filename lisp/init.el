@@ -1,13 +1,13 @@
 ;;; init.el --- emacs-camp  -*- lexical-binding: t -*-
 
-;; Load order: this file -> custom.el -> user/*.el -> local.el.
-;; ~/.config/emacs is a real directory; elpa/, eln-cache/, custom.el and
-;; local.el are written there by Emacs or by hand, never by emacs-camp.
+;; Files load in this order: this one, custom.el, user/*.el, local.el.
+;; ~/.config/emacs is an ordinary directory. Emacs or the user writes elpa/,
+;; eln-cache/, custom.el and local.el into it; emacs-camp never does.
 
 ;;; Packages
 
-;; package.el + MELPA, deliberately not Nix: the packages worth following move
-;; daily and a Nix snapshot of MELPA trails by weeks.
+;; Packages come from package.el and MELPA on purpose, not from Nix: the ones
+;; worth tracking change every day, and Nix's MELPA snapshot lags by weeks.
 (require 'package)
 (setq package-archives
       '(("melpa" . "https://melpa.org/packages/")
@@ -16,21 +16,21 @@
         ("gnu" . "https://elpa.gnu.org/packages/"))
       package-archive-priorities
       '(("melpa" . 4) ("melpa-stable" . 3) ("nongnu" . 2) ("gnu" . 1))
-      ;; native-compile at install time, not on first load
+      ;; compile to native code when installing instead of on first load
       package-native-compile t)
 
-;; The use-package blocks are the package list. :ensure (on for all) installs
-;; a missing package when its block is read but never loads it: loading waits
-;; for a :hook/:bind/:mode/:commands trigger (always-defer). Only blocks that
-;; must load at startup say `:demand t'. :ensure acts only where this file
-;; is loaded as source: byte-compiled, use-package drops it from the .elc.
-;; So under the Home Manager module (which links a compiled init) installing
-;; is sync.el's job, at deploy in the background; without it (plain copy, no
-;; .elc) it happens at start. A source start during a sync skips :ensure so
-;; two processes never write elpa/ at once.
-;; eval-and-compile: these must hold while the byte-compiler expands the
-;; use-package forms below, not only when the .elc runs; otherwise the .elc
-;; is expanded with the defaults and `require's every package at startup.
+;; The package list is the set of use-package blocks below. With :ensure
+;; (enabled everywhere), reading a block installs its package if absent, but
+;; nothing is loaded until a :hook/:bind/:mode/:commands trigger fires
+;; (always-defer). Blocks needed at startup are marked `:demand t'.
+;; :ensure only matters when this file is read as source, since use-package
+;; strips it from the .elc. Under the Home Manager module, which links a
+;; compiled init, sync.el installs packages in the background at deploy;
+;; with a plain copy and no .elc, installs happen at startup. A source start
+;; that overlaps a running sync skips :ensure, so elpa/ never has two writers.
+;; eval-and-compile: the byte-compiler has to see these settings when it
+;; expands the use-package forms, not just the .elc at run time. Otherwise the
+;; .elc gets the default expansion and `require's all packages at startup.
 (eval-and-compile
   (require 'use-package)
   (defun ecamp-sync-running-p ()
@@ -44,14 +44,14 @@
       (and pid (> pid 0) (process-attributes pid) t)))
   (setq use-package-always-ensure (not (and (not noninteractive) (ecamp-sync-running-p)))
         use-package-always-defer t
-        ;; EMACS_USE_PACKAGE_STATS=1, then M-x use-package-report. Baked in at
-        ;; compile time like the rest, so it needs init.el loaded as source.
+        ;; Set EMACS_USE_PACKAGE_STATS=1 and run M-x use-package-report. Fixed at
+        ;; compile time like everything here, so load init.el from source.
         use-package-compute-statistics (getenv "EMACS_USE_PACKAGE_STATS")))
 
-;; macOS vets each .eln on its first dlopen (~0.3s, serialised). Whatever
-;; package.el compiles into eln-cache/ is vetted by the warmer the Home
-;; Manager module links as ./eln-warm: at startup, and after each compile batch.
-(defvar native-comp-eln-load-path)        ; absent without native-comp
+;; macOS checks every .eln the first time it is dlopen'ed (~0.3s each, one
+;; at a time). The Home Manager module links a warmer as ./eln-warm; it runs
+;; over what package.el puts in eln-cache/, at startup and after each batch.
+(defvar native-comp-eln-load-path)        ; only defined with native-comp
 (defun ecamp-eln-warm ()
   (let ((warm (expand-file-name (locate-user-emacs-file "eln-warm"))))
     (when (file-executable-p warm)
@@ -61,7 +61,7 @@
   (add-hook 'emacs-startup-hook #'ecamp-eln-warm)
   (add-hook 'native-comp-async-all-done-hook #'ecamp-eln-warm))
 
-;;; Custom writes here, never into init.el.
+;;; Custom saves to its own file, not init.el.
 
 (setq custom-file (locate-user-emacs-file "custom.el"))
 (load custom-file 'noerror 'nomessage)
@@ -69,7 +69,7 @@
 ;;; UI
 
 (column-number-mode 1)
-(when (fboundp 'fringe-mode)               ; absent without a window system
+(when (fboundp 'fringe-mode)               ; missing on builds without a GUI
   (fringe-mode '(12 . 12)))
 (setq visible-bell nil
       ring-bell-function (lambda ()
@@ -83,9 +83,9 @@
 
 ;;; Environment
 
-;; Emacs.app started from the Dock or Finder gets launchd's PATH, not the
-;; login shell's, so CLIs installed by bun, fnm, Homebrew... are missing.
-;; Only then (no TERM: not started from a terminal) ask the shell once.
+;; Launched from the Dock or Finder, Emacs.app inherits launchd's PATH rather
+;; than the login shell's, so tools from bun, fnm, Homebrew and the like are
+;; not found. In that case only (TERM unset, so no terminal) query the shell.
 (use-package exec-path-from-shell
   :if (and (memq window-system '(mac ns)) (not (getenv "TERM")))
   :demand t
@@ -94,18 +94,18 @@
 
 ;;; Completion
 
-;; Minibuffer: vertico shows the candidates of the built-in completing-read,
-;; orderless matches space-separated pieces in any order, marginalia
-;; annotates them, consult adds the search/jump commands, embark acts on the
-;; candidate at point. In buffers: corfu pops up completion-at-point, cape
-;; adds more capfs to it.
+;; In the minibuffer, vertico lists what the built-in completing-read offers,
+;; orderless lets space-separated terms match in any order, marginalia adds
+;; annotations, consult supplies search and jump commands, and embark runs
+;; actions on the current candidate. Inside buffers, corfu shows a popup for
+;; completion-at-point and cape contributes extra capfs.
 
 (use-package vertico
   :demand t
   :functions vertico-mode
   :config (vertico-mode 1))
 
-(use-package savehist                   ; vertico sorts by this history
+(use-package savehist                   ; history that vertico sorts by
   :ensure nil
   :demand t
   :config (savehist-mode 1))
@@ -167,12 +167,12 @@
 (use-package magit
   :bind ("C-x g" . magit-status))
 
-(use-package forge                       ; with magit, not before
+(use-package forge                       ; loads alongside magit, never earlier
   :after magit
   :demand t)
 
-;; Per buffer, not global-diff-hl-mode: that would load vc, diff-mode and
-;; log-edit at startup. diff-hl loads with the first file buffer.
+;; Enabled per buffer instead of global-diff-hl-mode, which would pull in vc,
+;; diff-mode and log-edit at startup. diff-hl arrives with the first file.
 (use-package diff-hl
   :hook ((prog-mode text-mode conf-mode) . diff-hl-mode)
   :hook (dired-mode . diff-hl-dired-mode)
@@ -180,15 +180,15 @@
 
 ;;; Agents
 
-;; agent-shell: ACP agents (Claude Code, Codex, Gemini, ...) in a comint
-;; buffer. Loads on the first M-x agent-shell / agent-shell-*-start-*.
-;; Each agent needs its ACP adapter on PATH: claude-agent-acp, codex-acp, ...
-;; (see agent-shell's README).
+;; agent-shell runs ACP agents (Claude Code, Codex, Gemini, ...) inside a
+;; comint buffer and loads on the first M-x agent-shell or
+;; agent-shell-*-start-*. Every agent requires its ACP adapter on PATH, e.g.
+;; claude-agent-acp or codex-acp (agent-shell's README has the list).
 (use-package agent-shell)
 
 ;;; Keys
 
-;; NS-only variables: declared so the file compiles on every OS.
+;; These exist only on NS builds; declare them so other OSes compile cleanly.
 (defvar ns-command-modifier)
 (defvar ns-alternate-modifier)
 (when (eq system-type 'darwin)
@@ -199,9 +199,9 @@
 
 ;;; User layer and free zone
 
-;; user/*.el: files a downstream supplies (Home Manager option
-;; emacs-camp.userFiles), loaded in name order. local.el: unmanaged, per
-;; host, loaded last so it can override anything.
+;; user/*.el come from a downstream through the Home Manager option
+;; emacs-camp.userFiles and load sorted by name. local.el is per host and
+;; unmanaged; it loads last so it can override everything.
 (defvar ecamp-load-source nil
   "Non-nil: load user/*.el as source (sync.el sets it so their :ensure runs).")
 (let ((dir (locate-user-emacs-file "user")))

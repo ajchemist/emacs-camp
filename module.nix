@@ -1,6 +1,6 @@
-# emacs-camp Home Manager module: deploys lisp/ on top of nix-basecamp's Emacs.
-# Consumes basecamp's contract only (basecamp.emacs.package, .warmProgram);
-# a downstream sets basecamp.emacs.enable/gui where the install happens.
+# Home Manager module for emacs-camp: puts lisp/ on top of nix-basecamp's Emacs.
+# It relies on nothing but basecamp's contract (basecamp.emacs.package,
+# .warmProgram); the downstream sets basecamp.emacs.enable/gui where it installs.
 { lib, config, pkgs, ... }:
 
 let
@@ -10,9 +10,9 @@ let
   elnWarm = "${config.basecamp.emacs.warmProgram}/bin/eln-warm";
   userNames = map baseNameOf cfg.userFiles;
 
-  # Byte-compiled with the Emacs that will load it, so a broken init fails the
-  # switch rather than the next start. use-package would run :ensure while
-  # compiling; the sandbox has no network and installing is sync.el's job.
+  # Compiled by the same Emacs that loads it, so a broken init breaks the switch
+  # instead of the next launch. :ensure is disabled while compiling: the
+  # sandbox is offline, and sync.el is what installs packages.
   compiled = pkgs.runCommand "emacs-camp-config" { nativeBuildInputs = [ emacs ]; } ''
     mkdir user
     cp ${./lisp}/*.el .
@@ -24,7 +24,7 @@ let
     ${lib.optionalString (cfg.userFiles != [ ]) "cp user/*.el user/*.elc $out/user/"}
   '';
 
-  # Every linked source: early-init, init, user/*.
+  # All sources that get linked: early-init, init, user/*.
   linked = [ "early-init" "init" ] ++ map (n: "user/${lib.removeSuffix ".el" n}") userNames;
 in
 {
@@ -47,23 +47,23 @@ in
       message = "emacs-camp needs nix-basecamp's Emacs: set basecamp.emacs.enable where the install happens.";
     }];
 
-    # Links only; ~/.config/emacs itself stays a real, writable directory.
+    # Only individual links; ~/.config/emacs remains a normal writable directory.
     xdg.configFile = lib.listToAttrs (map (f: lib.nameValuePair "emacs/${f}" { source = "${compiled}/${f}"; })
       (lib.concatMap (n: [ "${n}.el" "${n}.elc" ]) linked))
       // lib.optionalAttrs isDarwin { "emacs/eln-warm".source = elnWarm; };
 
-    # An .eln is keyed by the path Emacs loads the source from
-    # (~/.config/emacs/...), never a store path, so it is made here, once per
-    # content change, and vetted at once on macOS (init's load before any
-    # startup hook could warm them).
+    # An .eln's name depends on the path the source is loaded from
+    # (~/.config/emacs/...), not a store path, so build it here whenever the
+    # content changes and warm it immediately on macOS (init loads before a
+    # startup hook would get the chance).
     home.activation.emacsCampNativeCompile = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
       for f in ${lib.escapeShellArgs linked}; do
         src="$HOME/.config/emacs/$f.el"
         eln="$(${emacs}/bin/emacs --batch --eval "(when (native-comp-available-p) (princ (comp-el-to-eln-filename \"$src\")))" 2>/dev/null || true)"
         if [ -n "$eln" ] && [ ! -f "$eln" ]; then
-          # Same prelude as the byte-compile: without it :ensure runs here,
-          # installs from the network mid-compile and the .eln comes out
-          # requiring every package at startup.
+          # Reuse the byte-compile prelude; otherwise :ensure fires, packages
+          # download in the middle of compiling, and the resulting .eln
+          # requires all of them at startup.
           run ${emacs}/bin/emacs --batch \
             --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' \
             -f batch-native-compile "$src" \
@@ -73,9 +73,10 @@ in
       done
     '';
 
-    # Packages, in the background on every switch: sync.el installs what the
-    # :ensure blocks miss, compiles elpa/, refreshes quickstart; then the
-    # macOS warmer. One at a time; init.el skips :ensure while sync.pid lives.
+    # Each switch kicks off package work in the background: sync.el installs
+    # whatever :ensure blocks lack, compiles elpa/ and refreshes quickstart,
+    # followed by the macOS warmer. Never two at once; while sync.pid is alive
+    # init.el leaves :ensure alone.
     home.activation.emacsCampPackageSync = lib.hm.dag.entryAfter [ "emacsCampNativeCompile" ] ''
       d="''${XDG_CACHE_HOME:-$HOME/.cache}/emacs-camp"
       if ! kill -0 "$(cat "$d/sync.pid" 2>/dev/null)" 2>/dev/null; then
@@ -87,8 +88,8 @@ in
       fi
     '';
 
-    # ~/.emacs and ~/.emacs.d win over ~/.config/emacs: moved aside once,
-    # never deleted.
+    # ~/.emacs and ~/.emacs.d take priority over ~/.config/emacs, so rename
+    # them once; they are never removed.
     home.activation.emacsCampLegacy = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       for p in "$HOME/.emacs" "$HOME/.emacs.d"; do
         if [ -e "$p" ] && [ ! -L "$p" ] && [ ! -e "$p.before-emacs-camp" ]; then

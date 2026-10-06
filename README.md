@@ -2,11 +2,12 @@
 
 English · [한국어](README.ko.md)
 
-An Emacs runtime that keeps init light without giving up on packages:
-`use-package` installs what is missing, loads nothing until it is used, and
-configures each package when it loads. Built on
-[nix-basecamp](https://github.com/ajchemist/nix-basecamp), which installs
-Emacs itself; emacs-camp is only about what runs inside it.
+emacs-camp is an Emacs runtime with a small init and a full set of packages.
+Each package is handled by `use-package`: it gets installed when absent, stays
+unloaded until something actually calls it, and is configured at the moment it
+loads. Emacs itself comes from
+[nix-basecamp](https://github.com/ajchemist/nix-basecamp); this repository only
+cares about what runs on top of it.
 
 ```
 nix-basecamp   Emacs binary, GUI/nox, Emacs.app, store .eln warm-up
@@ -16,39 +17,39 @@ your flake     your own files through emacs-camp.userFiles
 
 ## The runtime (`lisp/`, no Nix needed)
 
-- **early-init.el**: no tool bar or scroll bar (macOS keeps its system menu
-  bar), no startup screen, GC off during init and 100MB after,
-  `package-quickstart`.
-- **init.el**: package.el + MELPA (melpa > melpa-stable > nongnu > gnu,
-  native-compiled at install), `use-package-always-ensure t` +
-  `use-package-always-defer t`, catppuccin latte, macOS Cmd = Meta and
-  Option = Super, exec-path-from-shell (Emacs.app started outside a
-  terminal only), completion (vertico, orderless, marginalia, consult,
-  embark + embark-consult; corfu + cape in buffers), git (magit + forge,
-  diff-hl per file buffer), agent-shell, then `custom.el`, `user/*.el`,
-  `local.el`.
+- **early-init.el**: drops the tool bar and scroll bar (on macOS the system
+  menu bar stays), skips the startup screen, turns GC off for init and sets
+  100MB afterwards, enables `package-quickstart`.
+- **init.el**: package.el with MELPA (priority melpa > melpa-stable > nongnu >
+  gnu, native-compiled when installed), `use-package-always-ensure t` and
+  `use-package-always-defer t`, the catppuccin latte theme, Cmd as Meta and
+  Option as Super on macOS, exec-path-from-shell (only for an Emacs.app not
+  launched from a terminal), completion (vertico, orderless, marginalia,
+  consult, embark + embark-consult; corfu + cape inside buffers), git (magit +
+  forge, diff-hl in each file buffer), agent-shell, and finally `custom.el`,
+  `user/*.el`, `local.el`.
 
-Without Nix, copying `lisp/*.el` into `~/.config/emacs/` works; packages then
-install on the first start instead of at deploy.
+You can skip Nix entirely and copy `lisp/*.el` into `~/.config/emacs/`. In that
+case packages get installed on the first launch rather than at deploy time.
 
 ### Packages
 
-The `use-package` blocks are the package list.
+The package list is simply the set of `use-package` blocks.
 
 | Keyword | Meaning |
 |---|---|
-| `:ensure` (default on) | install if missing; does not load. Runs only when the file is loaded as source: byte-compiled, use-package drops it, so with the module installing is the deploy-time sync's job (it loads the sources) |
-| none / `:hook` `:bind` `:mode` `:commands` | load on first use (default deferred) |
-| `:demand t` | load at startup; use only for what the first frame needs |
-| `:init` | runs at startup; keep it to `setq` and key bindings |
+| `:ensure` (default on) | install if missing; does not load. It only takes effect when the file is loaded from source; byte-compilation makes use-package drop it, so under the module the deploy-time sync (which loads the sources) does the installing |
+| none / `:hook` `:bind` `:mode` `:commands` | load on first use (deferred by default) |
+| `:demand t` | load at startup; reserve it for what the first frame needs |
+| `:init` | runs at startup; limit it to `setq` and key bindings |
 | `:config` | runs when the package loads (`with-eval-after-load`) |
 
-A block whose `:config` calls a package function needs `:functions name`
-(or `:commands`): the store build compiles init.el without the packages
-installed and treats "not known to be defined" as an error.
+If a block's `:config` calls a function from its package, add `:functions
+name` (or `:commands`). The store build compiles init.el with no packages
+present, and it treats "not known to be defined" as an error.
 
-Upgrading is `M-x package-upgrade-all`; removing a block leaves the package
-installed (`M-x package-delete`).
+To upgrade, run `M-x package-upgrade-all`. Deleting a block does not uninstall
+its package; use `M-x package-delete` for that.
 
 ## The Home Manager module
 
@@ -62,8 +63,8 @@ imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 ```
 
-It reads only basecamp's contract (`basecamp.emacs.package`,
-`.warmProgram`) and on each switch:
+The module depends on nothing from basecamp beyond its contract
+(`basecamp.emacs.package`, `.warmProgram`). Every switch does the following:
 
 | Step | Where | On failure |
 |---|---|---|
@@ -72,38 +73,42 @@ It reads only basecamp's contract (`basecamp.emacs.package`,
 | native-compile those files (+ warm, macOS) | host, `emacsCampNativeCompile` | warning; Emacs JITs instead |
 | install missing packages, compile `elpa/`, refresh quickstart, warm `.eln` (macOS) | host, background (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
 
-`.eln` files cannot come from the store: their name is keyed by the path
-Emacs loads the source from, which is `~/.config/emacs/...`. The switch does
-not wait for the package sync; an Emacs started meanwhile skips `:ensure`
-(`~/.cache/emacs-camp/sync.pid` is alive), so two processes never install at
-once. The switch-time native-compile runs with `:ensure` off, like the store
-byte-compile: otherwise it installs packages mid-compile and the `.eln` comes
-out loading every package at startup. The sync native-compiles `elpa/` on
-every core (Emacs's default is half, a single job on a 3-core machine) and
-logs each phase (`install`, `native-compile`, `warmed`) with its seconds. A pre-existing `~/.emacs` or `~/.emacs.d` would shadow
-`~/.config/emacs` and is moved to `*.before-emacs-camp` once.
+The store can't provide `.eln` files, because each file's name is derived from
+the path Emacs reads the source from, and that path is `~/.config/emacs/...`.
+A switch returns without waiting for the package sync. If you start Emacs in
+the meantime it skips `:ensure` while `~/.cache/emacs-camp/sync.pid` points at
+a live process, so installs never run in two processes at once. Native
+compilation at switch time also has `:ensure` turned off, as in the store
+byte-compile; otherwise packages would get installed halfway through the
+compile, and the resulting `.eln` would load all of them at startup. The sync
+native-compiles `elpa/` using all cores (by default Emacs uses half, which on
+a 3-core machine is a single job), and logs the seconds spent in each phase
+(`install`, `native-compile`, `warmed`). Since an existing `~/.emacs` or
+`~/.emacs.d` takes precedence over `~/.config/emacs`, it is renamed to
+`*.before-emacs-camp`, once.
 
 ### macOS only: `.eln` warm-up
 
-macOS vets every Mach-O file the first time a process `dlopen`s it (about
-0.3-0.4 s per file, serialised, then cached per file). Native-compiled Lisp
-(`.eln`) files are Mach-O dylibs, so on macOS the first use of each feature
-would stall once. nix-basecamp pays this for Emacs's ~3000 built-in `.eln`;
-emacs-camp pays it for the ones it produces:
+The first time a process `dlopen`s a Mach-O file, macOS checks it. That takes
+roughly 0.3-0.4 s per file, one file at a time, and the result is cached per
+file afterwards. A native-compiled Lisp file (`.eln`) is a Mach-O dylib, so
+without a warm-up every feature would hang once on its first use on macOS.
+nix-basecamp absorbs that cost for Emacs's ~3000 built-in `.eln`; emacs-camp
+absorbs it for the ones it builds:
 
-- the init and user files' `.eln`, right after they are compiled at switch;
-- package `.eln`, at the end of the background sync, and from Emacs itself at
-  startup and after each async compile batch (`ecamp-eln-warm`).
+- `.eln` for the init and user files, as soon as the switch compiles them;
+- package `.eln`, when the background sync finishes, plus from Emacs itself at
+  startup and after every async compile batch (`ecamp-eln-warm`).
 
-Linux and Windows have no such check: nothing is warmed there and no
-`eln-warm` link is created. GitHub's macOS runners do not perform the check
-either (CI's "macOS .eln vetting cost" step sees 0.000 s on both opens); on an
-ordinary Apple Silicon Mac the first open of a fresh `.eln` costs ~0.4 s.
+Linux and Windows don't do this check, so they get no warming and no
+`eln-warm` link. GitHub's macOS runners skip the check too (the "macOS .eln
+vetting cost" CI step measures 0.000 s for both opens), whereas a regular
+Apple Silicon Mac spends about 0.4 s on the first open of a new `.eln`.
 
 ### What lands where
 
-After a switch the host looks like this (macOS; Linux has no `eln-warm`
-link and no `Applications/`):
+This is the host after a switch (macOS; on Linux there is no `eln-warm` link
+and no `Applications/`):
 
 ```
 ~/.config/emacs/                     user-emacs-directory (a real directory)
@@ -121,13 +126,13 @@ link and no `Applications/`):
 ├── elpa/
 │   ├── agent-shell-<version>/ …           installed by the package sync
 │   └── archives/                          MELPA/ELPA indexes
-├── package-quickstart.el(c)               all package autoloads in one file
-├── custom.el                              Custom's writes
+├── package-quickstart.el(c)               every package's autoloads, one file
+├── custom.el                              written by Custom
 └── local.el                               yours, optional, loaded last
 
 ~/.cache/emacs-camp/
-├── sync.log                         last package sync, per-phase seconds
-└── sync.pid                         only while a sync runs
+├── sync.log                         latest package sync, seconds per phase
+└── sync.pid                         present only during a sync
 
 ~/.emacs.before-emacs-camp, ~/.emacs.d.before-emacs-camp   moved aside once, if they existed
 
@@ -142,37 +147,46 @@ link and no `Applications/`):
 | `custom.el` | Custom |
 | `local.el` | you, per host; loaded last |
 
-Profiling: `EMACS_USE_PACKAGE_STATS=1 emacs -q -l ~/.config/emacs/init.el`, then
-`M-x use-package-report` (the setting is fixed when init.el is compiled, so it
-needs the source loaded).
+To profile, run `EMACS_USE_PACKAGE_STATS=1 emacs -q -l ~/.config/emacs/init.el`
+and then `M-x use-package-report`. The setting gets baked in when init.el is
+compiled, which is why the source has to be loaded.
 
-The use-package policy (`always-ensure`, `always-defer`) sits in
-`eval-and-compile`: use-package expands at compile time, so a plain `setq`
-would leave the `.elc` expanded with the defaults and loading every package at
-startup.
+The use-package policy (`always-ensure`, `always-defer`) is wrapped in
+`eval-and-compile`. use-package expands its forms at compile time, so with a
+bare `setq` the `.elc` would be expanded with the defaults and would load all
+packages at startup.
 
 ## Checks
 
-`nix flake check` builds a home per platform with basecamp's Emacs and this
-module, which byte-compiles `lisp/` against it.
+For each platform, `nix flake check` builds a home from basecamp's Emacs plus
+this module, and that build byte-compiles `lisp/` with that Emacs.
 
-CI (`.github/workflows/ci.yml`) runs lint, the module-free runtime (`lisp/`
-copied in) on ubuntu, macOS and Windows, and a real deploy on ubuntu and
-macOS. Every job runs basecamp's Emacs (`packages.<system>.emacs` of this
-flake); Windows, where Nix does not run, installs GNU's build of the same
-version, which lint reads from the flake. `ci/smoke.el`
-starts the config the way Emacs does and checks:
+CI (`.github/workflows/ci.yml`) has a lint job, a module-free runtime job
+(`lisp/` copied in) on ubuntu, macOS and Windows, and a real deploy on ubuntu
+and macOS. Every job uses basecamp's Emacs (this flake's
+`packages.<system>.emacs`); Windows, where Nix does not run, installs GNU's
+build of the same version, which lint reads from the flake. It runs only when
+code changes (`lisp/`, `ci/`, `sync.el`, `module.nix`, the flake, the
+workflow), plus the weekly schedule. `ci/smoke.el` boots the config the same
+way Emacs does and verifies that:
 
-- init stays light: under `ECAMP_INIT_BUDGET` seconds (default 1.5; the time
-  goes to the job summary), and none of magit, forge, transient, consult,
-  embark, diff-hl, vc, org or agent-shell is loaded at startup;
-- packages load on first use: `C-x g` loads magit (forge follows), `M-s l`
-  consult, `C-.` embark (embark-consult joins), and visiting a file in a git
-  repository turns on diff-hl, corfu and the cape capfs.
+- init stays light: it finishes within `ECAMP_INIT_BUDGET` seconds (1.5 by
+  default; the measurement is written to the job summary), and magit, forge,
+  transient, consult, embark, diff-hl, vc, org and agent-shell are all still
+  unloaded after startup;
+- packages load when first used: `C-x g` brings in magit (and forge after
+  it), `M-s l` brings in consult, `C-.` brings in embark (with
+  embark-consult), and opening a file inside a git repository enables
+  diff-hl, corfu and the cape capfs.
+- every `use-package` package loads after init without error and within
+  `ECAMP_LOAD_BUDGET` seconds (2.0 by default), each timed in its own fresh
+  Emacs so nothing loaded earlier makes it look cheap. The job summary gets a
+  table per job: init time, features and GCs at startup, then each package
+  with when it loads, its first-load time and how many features it pulls in.
 
-The runtime job caches `elpa/` per OS, package list and ISO week; the weekly
-scheduled run starts empty, so MELPA drift still shows. On Windows runners the
-`gpg` on PATH is Git for Windows' MSYS build, which reports `bad-signature` on
-every GNU/NonGNU ELPA archive (where `compat` lives), so CI turns signature
-checks off there. On a Windows desktop, install a native gpg (Gpg4win)
-instead.
+The runtime job caches `elpa/` keyed on OS, package list and ISO week. The
+weekly scheduled run starts from an empty cache so MELPA drift is still
+caught. On Windows runners, the `gpg` found on PATH is the MSYS build shipped
+with Git for Windows, and it reports `bad-signature` for every GNU/NonGNU ELPA
+archive (`compat` lives there), so CI disables signature checking on that
+platform. On a Windows desktop, install a native gpg (Gpg4win) instead.

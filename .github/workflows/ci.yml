@@ -16,11 +16,11 @@ on:
     paths: *code
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * 1" # weekly: MELPA moves under us
+    - cron: "0 3 * * 1" # once a week, since MELPA keeps changing
 
 jobs:
-  # Static: every flake output evaluates, lisp/ byte-compiles against
-  # nix-basecamp's Emacs with warnings as errors, CI helpers parse.
+  # Static checks: all flake outputs evaluate, lisp/ byte-compiles with
+  # nix-basecamp's Emacs (warnings fail), and the CI helper scripts parse.
   lint:
     runs-on: ubuntu-latest
     outputs:
@@ -77,8 +77,8 @@ jobs:
           echo "D=$d" >> "$GITHUB_ENV"
           echo "WEEK=$(date -u +%G-%V)" >> "$GITHUB_ENV"
           emacs --version | head -1
-      # elpa/ cached per OS, package list and ISO week: pushes and PRs skip the
-      # MELPA download; the weekly cron run starts empty so drift still shows.
+      # Cache elpa/ by OS, package list and ISO week so pushes and PRs avoid
+      # fetching MELPA; the weekly cron starts clean, so drift still surfaces.
       - name: Cache elpa/
         if: github.event_name != 'schedule'
         uses: actions/cache@v6
@@ -88,16 +88,16 @@ jobs:
       - name: Package sync (installs, compiles, quickstart)
         run: |
           s=$SECONDS
-          # Windows runners: the gpg on PATH is Git for Windows' MSYS build,
-          # which fails every GNU/NonGNU ELPA signature (bad-signature on
-          # archive-contents.sig), and compat lives there. CI skips the
-          # check; a Windows desktop wants a native gpg (Gpg4win) instead.
+          # On Windows runners PATH resolves gpg to Git for Windows' MSYS
+          # build, which rejects every GNU/NonGNU ELPA signature
+          # (bad-signature on archive-contents.sig), and compat comes from
+          # there. CI turns the check off; on a desktop, use Gpg4win.
           pre='()'; [ "$RUNNER_OS" = Windows ] && pre='(setq package-check-signature nil)'
           emacs --batch --init-directory "$D" --eval "$pre" -l sync.el
           echo "| ${{ matrix.os }} package sync | $((SECONDS - s))s |" >> "$GITHUB_STEP_SUMMARY"
       - name: Byte-compile as the module does
-        # lisp/'s files only, as the module does: not the package-quickstart.el
-        # the sync generated next to them.
+        # Only the files from lisp/, matching the module, and not the
+        # package-quickstart.el that the sync wrote beside them.
         run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
       - name: Native-compile as the module does
         # emacsCampNativeCompile: the linked sources, :ensure off.
@@ -115,8 +115,8 @@ jobs:
       - name: agent-shell E2E (mock ACP agent)
         run: emacs --batch --init-directory "$D" -l ci/agent-shell-e2e.el
 
-  # The product path: nix-basecamp's builder + this module applied to the
-  # runner for real, then the same smoke and E2E against what landed.
+  # The real product flow: apply nix-basecamp's builder and this module to
+  # the runner, then rerun smoke and E2E on the installed result.
   deploy:
     strategy:
       fail-fast: false
@@ -140,8 +140,8 @@ jobs:
         if: runner.os == 'macOS'
         run: ./ci/eln-vetting.sh
 
-  # agent-shell against the real Claude Code ACP adapter. Runs only where the
-  # ANTHROPIC_API_KEY secret exists (never on forks' pull requests).
+  # agent-shell talking to the actual Claude Code ACP adapter. Needs the
+  # ANTHROPIC_API_KEY secret, so it never runs for pull requests from forks.
   agent-shell-claude:
     runs-on: ubuntu-latest
     env:

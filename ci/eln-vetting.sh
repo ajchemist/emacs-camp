@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# macOS only: measure the first-dlopen vetting cost the warm-up exists for.
-# A freshly compiled .eln is dlopen'ed twice; the first pays the vetting.
+# macOS only: time the first-dlopen check that the warm-up is there to avoid.
+# A new .eln is opened twice; the check costs only on the first open.
 set -euo pipefail
 emacs="${EMACS:-emacs}"
 d="$(mktemp -d)"

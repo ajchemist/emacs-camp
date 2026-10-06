@@ -1,11 +1,11 @@
 ;;; agent-shell-e2e.el --- drive agent-shell end to end in batch  -*- lexical-binding: t -*-
 
 ;; emacs --batch --init-directory DIR -l ci/agent-shell-e2e.el
-;; ECAMP_E2E_AGENT=mock (default): ci/mock-acp-agent.py, no network, no keys.
-;; ECAMP_E2E_AGENT=claude: the real Claude Code ACP adapter (claude-agent-acp
-;; on PATH, ANTHROPIC_API_KEY in the environment).
-;; Starts a session over a real subprocess, sends a prompt, waits for the
-;; expected text in the shell buffer. Exit 0 on success, 1 otherwise.
+;; ECAMP_E2E_AGENT=mock (default) uses ci/mock-acp-agent.py: offline, keyless.
+;; ECAMP_E2E_AGENT=claude uses the actual Claude Code ACP adapter, which needs
+;; claude-agent-acp on PATH and ANTHROPIC_API_KEY set.
+;; Opens a session on a real subprocess, submits a prompt and waits until the
+;; expected text shows up in the shell buffer. Exits 0 if it does, else 1.
 
 (require 'package)
 (package-initialize)
@@ -14,7 +14,7 @@
 (defvar e2e-dir (file-name-directory (or load-file-name buffer-file-name)))
 (defvar e2e-agent (or (getenv "ECAMP_E2E_AGENT") "mock"))
 (defvar e2e-timeout (if (equal e2e-agent "mock") 30 180))
-;; Session transcripts land under default-directory; keep them out of the checkout.
+;; Transcripts are written to default-directory; point it away from the repo.
 (setq default-directory (file-name-as-directory (make-temp-file "ecamp-e2e" t)))
 
 (defun e2e-wait (pred what)
@@ -56,7 +56,7 @@
           (e2e-wait (lambda ()
                       (save-excursion
                         (goto-char (point-min))
-                        ;; the reply, not the echoed prompt
+                        ;; match the answer, skipping the echoed prompt
                         (and (search-forward prompt nil t) (search-forward expect nil t))))
                     "reply"))
         (message "e2e[%s]: reply %.2fs after prompt, %.2fs total"
