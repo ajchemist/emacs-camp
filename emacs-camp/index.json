@@ -1,0 +1,13 @@
+{
+  "title": "emacs-camp",
+  "description": "Try emacs-camp in a terminal: Emacs 31 with the full package set, nothing to install",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "foreground": "foreground.sh"
+    }
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  }
+}
