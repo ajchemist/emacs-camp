@@ -7,11 +7,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1790926052,
-        "narHash": "sha256-YJFAkbrwytZXLP0EzS+NNEEDhp6k5NMOBPih+pSGBSQ=",
+        "lastModified": 1791210262,
+        "narHash": "sha256-b4S16T+8ML2pSixmhJki6vWSRe95pDTiwEBhoilb6Bo=",
         "owner": "ajchemist",
         "repo": "nix-basecamp",
-        "rev": "d05536fad4f33cfa0cd2256750443eadbd95006c",
+        "rev": "1aed073693a3cde300f8c0664f055fd07279ff7c",
         "type": "github"
       },
       "original": {
