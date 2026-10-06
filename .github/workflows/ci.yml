@@ -99,6 +99,15 @@ jobs:
         # lisp/'s files only, as the module does: not the package-quickstart.el
         # the sync generated next to them.
         run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
+      - name: Native-compile as the module does
+        # emacsCampNativeCompile: the linked sources, :ensure off.
+        run: |
+          for f in lisp/*.el; do
+            emacs --batch --init-directory "$D" \
+              --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' \
+              --eval '(unless (native-comp-available-p) (kill-emacs 0))' \
+              -f batch-native-compile "$D/${f#lisp/}"
+          done
       - name: Smoke
         env:
           ECAMP_SMOKE_LABEL: runtime ${{ matrix.os }}
