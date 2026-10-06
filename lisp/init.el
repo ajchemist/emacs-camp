@@ -175,23 +175,6 @@
 (when-let* ((gls (executable-find "gls")))
   (setq insert-directory-program gls))
 
-;; dirvish takes over dired the first time dired loads, not at startup: the
-;; first C-x d or C-x C-j pulls in dired, then dirvish, then runs as dirvish.
-;; Plain dired keys still work; ? opens a transient of everything else.
-(use-package dirvish
-  :functions dirvish-override-dired-mode
-  :init (with-eval-after-load 'dired (dirvish-override-dired-mode 1))
-  :bind (:map dirvish-mode-map
-         ("?" . dirvish-dispatch)
-         ("TAB" . dirvish-subtree-toggle)
-         ("s" . dirvish-quicksort)
-         ("l" . dirvish-ls-switches-menu)
-         ("y" . dirvish-yank-menu)
-         ("M-f" . dirvish-history-go-forward)
-         ("M-b" . dirvish-history-go-backward))
-  :custom
-  (dirvish-attributes '(vc-state subtree-state collapse file-time file-size)))
-
 ;;; Git
 
 (use-package magit
