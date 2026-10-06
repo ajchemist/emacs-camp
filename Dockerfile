@@ -19,6 +19,8 @@ COPY --from=emacs /usr/local /usr/local
 USER user
 WORKDIR /home/user
 COPY --chown=user:user lisp/ .config/emacs/
+# extras/ (opt-in under the module) load as user files, so the demo shows them all.
+COPY --chown=user:user extras/ .config/emacs/user/
 COPY sync.el /tmp/sync.el
 RUN emacs --batch -l /tmp/sync.el \
  && cd .config/emacs && emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' -f batch-byte-compile early-init.el init.el

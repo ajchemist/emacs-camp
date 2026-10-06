@@ -13,11 +13,8 @@ emacs-camp는 init을 작게 두면서도 패키지는 넉넉히 쓰는 Emacs �
 저장소는 그 위에서 돌아가는 부분만 신경 씁니다.
 
 **브라우저에서 써 보기:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)를
-열면 emacs-camp가 설치된 터미널이 뜹니다(Emacs 31, 터미널 빌드). `emacs`를
-입력하면 됩니다. 무료 Killercoda 계정이 필요하고 세션은 1시간입니다. 이미지는
-`ghcr.io/ajchemist/emacs-camp`(`Dockerfile`, 매주 다시 빌드)이므로
-로컬에서도 `docker run --rm -it ghcr.io/ajchemist/emacs-camp`로 실행할 수
-있습니다.
+열면 emacs-camp가 설치된 터미널이 뜹니다. `emacs`를 입력하면 됩니다. 로컬에서는
+`docker run --rm -it ghcr.io/ajchemist/emacs-camp`. 자세한 내용은 [데모 이미지](#데모-이미지와-killercoda)를 보세요.
 
 ```
 nix-basecamp   Emacs 바이너리, GUI/nox, Emacs.app, store .eln warm-up
@@ -166,6 +163,32 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준; Linux에는 `
 use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로 감싸
 두었습니다. use-package는 컴파일할 때 전개되기 때문에 그냥 `setq`만 쓰면
 `.elc`가 기본값 기준으로 전개되고, 결국 시작할 때 패키지를 전부 로드합니다.
+
+## 데모 이미지와 Killercoda
+
+`Dockerfile`은 `ghcr.io/ajchemist/emacs-camp`를 빌드합니다.
+
+- Emacs 31.1을 소스에서 빌드합니다(Debian 패키지는 너무 오래돼서 forge가
+  요구하는 내장 compat 31이 없습니다). 터미널 전용이고 native compilation은
+  끕니다.
+- `lisp/`는 `~/.config/emacs/`로, `extras/*.el`은 모두 `user/`로 들어갑니다.
+  그래서 모듈에서는 opt-in인 extras(한국어 기본 설정 포함)가 전부 켜져
+  있습니다. 패키지 설치와 `init.el` 바이트 컴파일은 모듈처럼 빌드할 때 끝냅니다.
+- GitHub Actions(`.github/workflows/image.yml`)가 main에서 `latest`를
+  빌드합니다. `lisp/`, `extras/`, `sync.el`, `Dockerfile`이 바뀌는 push마다,
+  그리고 MELPA 갱신을 반영하려고 매일 밤 18:00 UTC(03:00 KST)에 빌드합니다.
+  새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
+
+Killercoda 시나리오는 이 이미지를 실행합니다(`docker run -it ... bash`).
+시나리오 파일은 다른 것은 아무것도 없는 `killercoda` 브랜치에 있고,
+Killercoda는 이 브랜치를 동기화합니다. main의 깨진 심볼릭 링크
+(`.claude/skills`, 커밋되지 않은 `.agents/skills`를 가리킴)가 Killercoda
+동기화를 멈추게 해서 main을 원본으로 쓸 수 없습니다. 무료 계정은 세션이
+1시간이고 하루 사용 제한은 없습니다. 방문자는 무료 Killercoda 로그인이
+필요합니다.
+
+`binder/`는 이전 실험(mybinder.org)입니다. 동작은 하지만 실행까지 9~11분이
+걸려서 어디서도 링크하지 않습니다.
 
 ## 검사
 

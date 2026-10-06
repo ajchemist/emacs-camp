@@ -13,12 +13,9 @@ loads. Emacs itself comes from
 [nix-basecamp](https://github.com/ajchemist/nix-basecamp); this repository only
 cares about what runs on top of it.
 
-**Try it in a browser:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)
-opens a terminal with emacs-camp already installed (Emacs 31, terminal build);
-type `emacs`. It needs a free Killercoda account, and a session lasts an hour.
-The image is `ghcr.io/ajchemist/emacs-camp` (`Dockerfile`, rebuilt
-weekly), so `docker run --rm -it ghcr.io/ajchemist/emacs-camp` works
-locally too.
+**Try it in a browser:** the [Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)
+opens a terminal with emacs-camp installed; type `emacs`. Locally:
+`docker run --rm -it ghcr.io/ajchemist/emacs-camp`. See [Demo image](#demo-image-and-killercoda).
 
 ```
 nix-basecamp   Emacs binary, GUI/nox, Emacs.app, store .eln warm-up
@@ -172,6 +169,30 @@ The use-package policy (`always-ensure`, `always-defer`) is wrapped in
 `eval-and-compile`. use-package expands its forms at compile time, so with a
 bare `setq` the `.elc` would be expanded with the defaults and would load all
 packages at startup.
+
+## Demo image and Killercoda
+
+`Dockerfile` builds `ghcr.io/ajchemist/emacs-camp`:
+
+- Emacs 31.1 built from source (Debian's is too old: forge needs the
+  built-in compat 31), terminal only, without native compilation.
+- `lisp/` goes to `~/.config/emacs/` and every `extras/*.el` to `user/`, so
+  the opt-in extras (Korean defaults included) are all on. Packages are
+  installed at build time and `init.el` is byte-compiled, as under the module.
+- GitHub Actions (`.github/workflows/image.yml`) builds `latest` from main on
+  every push that touches `lisp/`, `extras/`, `sync.el` or `Dockerfile`, and
+  nightly at 18:00 UTC so MELPA updates land. A newer build cancels a running
+  one.
+
+The Killercoda scenario runs that image (`docker run -it ... bash`). Its files
+live on the `killercoda` branch, which holds nothing else and is the branch
+Killercoda syncs: a dangling symlink on main (`.claude/skills`, pointing at
+the uncommitted `.agents/skills`) stalls Killercoda's sync, so main can't be
+the source. Free accounts get one-hour sessions with no daily limit; visitors
+need a free Killercoda login.
+
+`binder/` is an earlier experiment (mybinder.org). It works, but a launch
+takes 9 to 11 minutes, so nothing links to it.
 
 ## Checks
 
