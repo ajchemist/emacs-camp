@@ -8,6 +8,13 @@ emacs-camp는 init을 작게 두면서도 패키지는 넉넉히 쓰는 Emacs �
 [nix-basecamp](https://github.com/ajchemist/nix-basecamp)가 담당하므로 이
 저장소는 그 위에서 돌아가는 부분만 신경 씁니다.
 
+**브라우저에서 써 보기:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/playground)를
+열면 emacs-camp가 설치된 터미널이 뜹니다(Emacs 31, 터미널 빌드). `emacs`를
+입력하면 됩니다. 무료 Killercoda 계정이 필요하고 세션은 1시간입니다. 이미지는
+`ghcr.io/ajchemist/emacs-camp-demo`(`demo/Dockerfile`, 매주 다시 빌드)이므로
+로컬에서도 `docker run --rm -it ghcr.io/ajchemist/emacs-camp-demo`로 실행할 수
+있습니다.
+
 ```
 nix-basecamp   Emacs 바이너리, GUI/nox, Emacs.app, store .eln warm-up
 emacs-camp     lisp/ 런타임 + 이를 배포하는 Home Manager 모듈

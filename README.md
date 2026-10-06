@@ -9,6 +9,13 @@ loads. Emacs itself comes from
 [nix-basecamp](https://github.com/ajchemist/nix-basecamp); this repository only
 cares about what runs on top of it.
 
+**Try it in a browser:** [Killercoda playground](https://killercoda.com/emacs-camp/scenario/playground)
+opens a terminal with emacs-camp already installed (Emacs 31, terminal build);
+type `emacs`. It needs a free Killercoda account, and a session lasts an hour.
+The image is `ghcr.io/ajchemist/emacs-camp-demo` (`demo/Dockerfile`, rebuilt
+weekly), so `docker run --rm -it ghcr.io/ajchemist/emacs-camp-demo` works
+locally too.
+
 ```
 nix-basecamp   Emacs binary, GUI/nox, Emacs.app, store .eln warm-up
 emacs-camp     lisp/ runtime + a Home Manager module that deploys it
