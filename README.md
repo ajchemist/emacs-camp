@@ -156,8 +156,11 @@ startup.
 `nix flake check` builds a home per platform with basecamp's Emacs and this
 module, which byte-compiles `lisp/` against it.
 
-CI (`.github/workflows/ci.yml`) runs lint, a Nix-free runtime on ubuntu,
-macOS and Windows, and a real deploy on ubuntu and macOS. `ci/smoke.el`
+CI (`.github/workflows/ci.yml`) runs lint, the module-free runtime (`lisp/`
+copied in) on ubuntu, macOS and Windows, and a real deploy on ubuntu and
+macOS. Every job runs basecamp's Emacs (`packages.<system>.emacs` of this
+flake); Windows, where Nix does not run, installs GNU's build of the same
+version, which lint reads from the flake. `ci/smoke.el`
 starts the config the way Emacs does and checks:
 
 - init stays light: under `ECAMP_INIT_BUDGET` seconds (default 1.5; the time

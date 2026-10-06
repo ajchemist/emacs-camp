@@ -152,8 +152,11 @@ use-package는 컴파일 시점에 전개되므로, 단순 `setq`로 두면 `.el
 `nix flake check`는 플랫폼마다 basecamp의 Emacs와 이 모듈로 home을 하나씩
 빌드하며, 그 과정에서 `lisp/`를 그 Emacs로 byte-compile합니다.
 
-CI(`.github/workflows/ci.yml`)는 lint, ubuntu·macOS·Windows에서 Nix 없는
-런타임, ubuntu·macOS에서 실제 배포를 돌립니다. `ci/smoke.el`은 Emacs가 하는
+CI(`.github/workflows/ci.yml`)는 lint, ubuntu·macOS·Windows에서 모듈 없이
+`lisp/`만 복사한 런타임, ubuntu·macOS에서 실제 배포를 돌립니다. 모든 job은
+basecamp의 Emacs(이 flake의 `packages.<system>.emacs`)를 씁니다. Nix가 돌지
+않는 Windows는 lint가 flake에서 읽은 것과 같은 버전의 GNU 빌드를 설치합니다.
+`ci/smoke.el`은 Emacs가 하는
 방식대로 설정을 띄우고 다음을 확인합니다.
 
 - init이 가벼운지: `ECAMP_INIT_BUDGET`초 이내(기본 1.5, 측정값은 job
