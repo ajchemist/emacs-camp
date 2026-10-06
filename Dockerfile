@@ -5,6 +5,12 @@
 # Only the result ships: the home and its /nix/store closure, no Nix.
 FROM nixos/nix AS build
 ENV NIX_CONFIG="experimental-features = nix-command flakes"
+# Emacs without native compilation is not in the binary cache. Build it in a
+# layer that depends on flake.lock alone, so the GHA layer cache keeps it
+# until the lock moves (same derivation as the sandbox's).
+COPY flake.nix flake.lock /src/
+RUN nix build --impure --no-link --expr \
+      '(builtins.getFlake "path:/src").inputs.basecamp.lib.emacsPackage { system = builtins.currentSystem; nativeComp = false; }'
 COPY . /src
 RUN nix build "path:/src#homeConfigurations.sandbox-$(uname -m)-linux.activationPackage" -o /hm \
  && mkdir -p /home/user/.local/state/nix/profiles \
