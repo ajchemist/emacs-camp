@@ -39,9 +39,12 @@ in
       default = [ ];
       description = "Downstream .el files, linked as ~/.config/emacs/user/<name> and loaded in name order after the core, before local.el.";
     };
+    korean.enable = lib.mkEnableOption "Korean defaults (extras/korean.el): hangul input on C-\\, UTF-8 over EUC-KR, hangul/hanja keys, a hangul font";
   };
 
   config = lib.mkIf cfg.enable {
+    emacs-camp.userFiles = lib.mkIf cfg.korean.enable (lib.mkBefore [ ./extras/korean.el ]);
+
     assertions = [{
       assertion = config.basecamp.emacs.enable;
       message = "emacs-camp needs nix-basecamp's Emacs: set basecamp.emacs.enable where the install happens.";

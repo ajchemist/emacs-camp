@@ -61,6 +61,7 @@ inputs.emacs-camp = {
 # in a home built with basecamp.lib.mkDarwin / mkHome, basecamp.emacs.enable = true:
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
+emacs-camp.korean.enable = true;  # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys, a hangul font
 ```
 
 The module depends on nothing from basecamp beyond its contract
