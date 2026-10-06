@@ -207,9 +207,11 @@ would load all packages at startup.
   `homeConfigurations.sandbox-<arch>-linux` (basecamp's Emacs plus this module)
   and runs its Home Manager activation, so the links, `extras-default.el`,
   compile and package sync are the module's own. Only the home and its
-  `/nix/store` closure go into a Debian slim image; Nix itself does not ship.
+  `/nix/store` closure ship, on `scratch`: no distribution, no Nix (about
+  170 MB compressed).
 - The sandbox is lightened by options, not by a second recipe:
-  `basecamp.emacs.nativeComp = false` drops gcc and libgccjit, and no extra is
+  `basecamp.emacs.nativeComp = false` drops gcc and libgccjit, a bare
+  `systemctl` keeps systemd out, git is `gitMinimal`, and no extra is
   on (`M-x customize-variable RET ecamp-extras` turns one on).
 - GitHub Actions (`.github/workflows/image.yml`) builds `latest` from main.
   It runs on every push that touches `lisp/`, `extras/`, `sync.el`,

@@ -27,7 +27,12 @@
         basecamp.emacs.nativeComp = false;
         # Only what the demo runs: Emacs and a git without its perl/python
         # tools (basecamp's full git and jq, home-manager's CLI are dropped).
-        home.packages = lib.mkForce [ config.basecamp.emacs.package pkgs.gitMinimal ];
+        # The image starts from scratch, so the shell and its tools come from here.
+        home.packages = lib.mkForce (with pkgs; [
+          config.basecamp.emacs.package gitMinimal bashInteractive coreutils less cacert
+        ]);
+        # No systemd in a container; a bare name keeps systemd (~120 MB) out of the closure.
+        systemd.user.systemctlPath = "systemctl";
         # Two locales instead of every glibc locale (~220 MB).
         i18n.glibcLocales = pkgs.glibcLocales.override {
           allLocales = false;
