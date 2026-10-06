@@ -147,6 +147,25 @@ jobs:
         if: runner.os == 'macOS'
         run: ./ci/eln-vetting.sh
 
+  # emacs-camp next to agent-camp, as a downstream with both would deploy
+  # them: claude, codex, pi and goose with their ACP adapters. agent-shell
+  # then starts each with its own config and completes the ACP initialize
+  # exchange (no account needed; the round trip with a key is the job below).
+  agents:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - name: Deploy emacs-camp + agent-camp onto the runner
+        run: ECAMP_WITH_AGENTS=1 ./ci/e2e-deploy.sh
+      - name: agent-shell starts each agent (ACP initialize)
+        run: PATH="$AGENT_CAMP_PATH" "$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/acp-handshake.el claude codex pi goose
+
   # agent-shell talking to the actual Claude Code ACP adapter. Needs the
   # ANTHROPIC_API_KEY secret, so it never runs for pull requests from forks.
   agent-shell-claude:

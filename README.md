@@ -197,3 +197,13 @@ caught. On Windows runners, the `gpg` found on PATH is the MSYS build shipped
 with Git for Windows, and it reports `bad-signature` for every GNU/NonGNU ELPA
 archive (`compat` lives there), so CI disables signature checking on that
 platform. On a Windows desktop, install a native gpg (Gpg4win) instead.
+
+The agents job deploys emacs-camp next to
+[agent-camp](https://github.com/ajchemist/agent-camp) on ubuntu and macOS, with
+claude, codex, pi and goose and their ACP adapters (`claude-agent-acp`,
+`codex-acp`, `pi-acp`, `goose acp`). Then `ci/acp-handshake.el` has agent-shell
+start each one with its own config and waits for the ACP initialize exchange.
+No account is needed, because initialize comes before authentication. The
+emacs-camp module does not depend on agent-camp; the flake input is only for
+CI. To get the adapters on your own machine, import agent-camp's module
+(answer yes to `<agent>-acp`), or install them however you like.

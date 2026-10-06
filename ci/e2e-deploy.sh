@@ -3,12 +3,18 @@
 # using nix-basecamp's builder plus this module for the runner's user.
 #   Linux: basecamp.lib.mkHome (emacs = nox) -> activate Home Manager.
 #   macOS: basecamp.lib.mkDarwin (emacs = gui) -> activate nix-darwin (sudo).
+# ECAMP_WITH_AGENTS=1 adds agent-camp with its CI set (claude, codex, pi,
+# goose and their ACP adapters) and exports AGENT_CAMP_PATH.
 # After that, wait for the background package sync and list the result.
 set -euo pipefail
 user="$(id -un)"
 flake="$(pwd)"
 summary="${GITHUB_STEP_SUMMARY:-/dev/null}"
 t0=$SECONDS
+mods="f.homeModules.default"
+if [ "${ECAMP_WITH_AGENTS:-}" = 1 ]; then
+  mods="$mods f.inputs.agent-camp.homeModules.default f.inputs.agent-camp.lib.ciSettings"
+fi
 
 case "$(uname -s)" in
   Linux)
@@ -16,7 +22,7 @@ case "$(uname -s)" in
       let f = builtins.getFlake \"path:$flake\"; in
       (f.inputs.basecamp.lib.mkHome {
         user = \"$user\"; homeDirectory = \"$HOME\"; emacs = \"nox\";
-        modules = [ f.homeModules.default ];
+        modules = [ $mods ];
       }).activationPackage")"
     "$out/activate"
     emacs="$HOME/.nix-profile/bin/emacs"
@@ -26,7 +32,7 @@ case "$(uname -s)" in
       let f = builtins.getFlake \"path:$flake\"; in
       (f.inputs.basecamp.lib.mkDarwin {
         user = \"$user\"; emacs = \"gui\";
-        modules = [ { home-manager.sharedModules = [ f.homeModules.default ]; } ];
+        modules = [ { home-manager.sharedModules = [ $mods ]; } ];
       }).system")"
     for f in /etc/bashrc /etc/zshrc /etc/zshenv; do
       if [ -f "$f" ] && [ ! -L "$f" ]; then sudo mv "$f" "$f.before-nix-darwin"; fi
@@ -49,6 +55,9 @@ grep -q '^emacs-camp sync: done' "$cache/sync.log"
 if [ "$(uname -s)" = Darwin ]; then grep -q '^emacs-camp sync: warmed' "$cache/sync.log"; fi
 
 echo "EMACS=$emacs" >> "${GITHUB_ENV:-/dev/null}"
+if [ "${ECAMP_WITH_AGENTS:-}" = 1 ]; then
+  echo "AGENT_CAMP_PATH=$HOME/.bun/bin:$HOME/.local/share/fnm/aliases/default/bin:$HOME/.nix-profile/bin:/etc/profiles/per-user/$user/bin:$PATH" >> "${GITHUB_ENV:-/dev/null}"
+fi
 {
   echo "### deploy ($(uname -s))"
   echo "| step | seconds |"; echo "|---|---|"

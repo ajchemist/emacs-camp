@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "agent-camp": {
+      "inputs": {
+        "basecamp": [
+          "basecamp"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791264633,
+        "narHash": "sha256-cCJ2E+QOspA6v0eyZZLiLDYkhHn2g9AcbvHHJmsroIU=",
+        "owner": "ajchemist",
+        "repo": "agent-camp",
+        "rev": "d2270930789ecc83bea7c8159566e5c64917787f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ajchemist",
+        "repo": "agent-camp",
+        "type": "github"
+      }
+    },
     "basecamp": {
       "inputs": {
         "home-manager": "home-manager",
@@ -84,6 +104,7 @@
     },
     "root": {
       "inputs": {
+        "agent-camp": "agent-camp",
         "basecamp": "basecamp"
       }
     }

@@ -192,7 +192,7 @@
 ;; agent-shell runs ACP agents (Claude Code, Codex, Gemini, ...) inside a
 ;; comint buffer and loads on the first M-x agent-shell or
 ;; agent-shell-*-start-*. Every agent requires its ACP adapter on PATH, e.g.
-;; claude-agent-acp or codex-acp (agent-shell's README has the list).
+;; claude-agent-acp or codex-acp; agent-camp installs them (<agent>-acp).
 (use-package agent-shell)
 
 ;;; Keys

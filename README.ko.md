@@ -190,3 +190,13 @@ runtime 작업은 `elpa/`를 OS, 패키지 목록, ISO 주차를 키로 캐시�
 GNU/NonGNU ELPA 아카이브(`compat`이 여기 있음)마다 `bad-signature`를
 보고합니다. 그래서 CI는 그 플랫폼에서 서명 검사를 끕니다. Windows
 데스크톱에서는 대신 네이티브 gpg(Gpg4win)를 설치하세요.
+
+agents 잡은 ubuntu와 macOS에서 emacs-camp를
+[agent-camp](https://github.com/ajchemist/agent-camp)와 함께 배포합니다. 배포 대상은
+claude, codex, pi, goose와 각각의 ACP 어댑터(`claude-agent-acp`, `codex-acp`,
+`pi-acp`, `goose acp`)입니다. 그다음 `ci/acp-handshake.el`이 agent-shell로 각
+에이전트를 자체 설정대로 시작하고, ACP initialize 교환이 끝날 때까지 기다립니다.
+initialize는 인증보다 먼저 일어나므로 계정이 필요 없습니다. emacs-camp 모듈은
+agent-camp에 의존하지 않으며, flake input은 CI에서만 씁니다. 자기 머신에 어댑터를
+설치하려면 agent-camp 모듈을 import하고 `<agent>-acp`에 yes로 답하거나, 원하는
+방법으로 직접 설치하면 됩니다.

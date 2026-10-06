@@ -2,6 +2,12 @@
   description = "emacs-camp: an Emacs runtime on top of nix-basecamp (use-package, deferred loading, deploy-time compile)";
 
   inputs.basecamp.url = "github:ajchemist/nix-basecamp";
+  # CI only: the agents and ACP adapters agent-shell drives in the agents job.
+  # The module does not depend on it.
+  inputs.agent-camp = {
+    url = "github:ajchemist/agent-camp";
+    inputs.basecamp.follows = "basecamp";
+  };
 
   outputs = { self, basecamp, ... }:
   let
