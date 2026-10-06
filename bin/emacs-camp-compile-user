@@ -1,0 +1,13 @@
+#!/bin/sh
+# Byte- and native-compile <init-dir>/user/*.el in place, without a Nix deploy.
+# Usage: emacs-camp-compile-user [init-dir]   (default ~/.config/emacs)
+# Symlinks are skipped: those come from the Home Manager module, which
+# compiles them itself and links read-only .elc files beside them. Packages
+# are not installed here (:ensure off); start Emacs once first if a file
+# needs a new one.
+dir=${1:-$HOME/.config/emacs}
+exec emacs --batch --init-directory "$dir" --eval "(progn
+  (startup-redirect-eln-cache \"eln-cache\") (package-activate-all) (require 'use-package)
+  (setq use-package-ensure-function 'ignore)
+  (dolist (f (directory-files (locate-user-emacs-file \"user\") t \"\\\\.el\\\\'\"))
+    (unless (file-symlink-p f) (byte-compile-file f) (native-compile f))))"

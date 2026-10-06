@@ -192,6 +192,23 @@
   :custom
   (dirvish-attributes '(vc-state subtree-state collapse file-time file-size)))
 
+;;; Lisp
+
+;; Structural editing for lisp buffers: parens stay balanced, C-) / C-} slurp
+;; and barf. RET is left as newline-and-indent (paredit 26 takes it over,
+;; which breaks RET in ielm and M-:); C-j is paredit's newline.
+(use-package paredit
+  :hook ((emacs-lisp-mode lisp-mode lisp-interaction-mode scheme-mode
+          clojure-mode ielm-mode eval-expression-minibuffer-setup) . paredit-mode)
+  :bind (:map paredit-mode-map
+         ("RET" . nil)
+         ("C-j" . paredit-newline)))
+
+;; Each nesting level gets its own color.
+(use-package rainbow-delimiters
+  :hook ((emacs-lisp-mode lisp-mode lisp-interaction-mode scheme-mode
+          clojure-mode ielm-mode) . rainbow-delimiters-mode))
+
 ;;; Git
 
 (use-package magit
