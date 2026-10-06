@@ -5,7 +5,9 @@
 FROM debian:trixie-slim AS emacs
 RUN apt-get update && apt-get -y install --no-install-recommends \
       build-essential pkg-config curl ca-certificates libgnutls28-dev libncurses-dev zlib1g-dev libtree-sitter-dev \
- && curl -sSfL https://mirrors.kernel.org/gnu/emacs/emacs-31.1.tar.gz | tar xz -C /tmp \
+ && for m in https://ftpmirror.gnu.org https://mirrors.kernel.org/gnu https://mirror.csclub.uwaterloo.ca/gnu; do \
+      curl -sSfL --retry 2 -o /tmp/emacs.tgz "$m/emacs/emacs-31.1.tar.gz" && break; done \
+ && tar xzf /tmp/emacs.tgz -C /tmp \
  && cd /tmp/emacs-31.1 && ./configure --without-x --without-sound --without-makeinfo --without-native-compilation \
  && make -j"$(nproc)" && make install
 
