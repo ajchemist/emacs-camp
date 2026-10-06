@@ -82,8 +82,11 @@ native-compile도 store byte-compile처럼 `:ensure`를 끈 채로 돌립니다.
 패키지를 전부 로드해 버립니다. sync는 `elpa/`를 코어 전부를 써서
 native-compile하고(Emacs 기본은 절반이라 3코어 머신이면 작업이 하나뿐),
 단계(`install`, `native-compile`, `warmed`)마다 걸린 초를 로그에 적습니다.
-기존 `~/.emacs`나 `~/.emacs.d`가 있으면 `~/.config/emacs`보다 우선하므로, 한
-번만 `*.before-emacs-camp`로 이름을 바꿔 둡니다.
+그다음 다른 Emacs 빌드의 `eln-cache/` 하위 디렉터리를 지웁니다(빌드마다 하나씩
+쌓이지만 읽히는 건 실행 중인 빌드 것뿐이고, 옛 빌드로 돌아가면 다시 JIT할 뿐입니다).
+기존 `~/.emacs`나 `~/.emacs.d`는 `~/.config/emacs`보다 우선하므로, switch가
+그것을 발견할 때마다 `*.before-emacs-camp`로 옮깁니다. 이전 백업은
+`*.before-emacs-camp.~N~`가 되고, 심링크는 대상은 그대로 둔 채 링크만 옮깁니다.
 
 ### macOS 한정: `.eln` warm-up
 
@@ -131,7 +134,7 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준; Linux에는 `
 ├── sync.log                         가장 최근 패키지 sync, 단계별 초
 └── sync.pid                         sync 중에만 존재
 
-~/.emacs.before-emacs-camp, ~/.emacs.d.before-emacs-camp   있었다면 한 번 옮겨 둔 것
+~/.emacs.before-emacs-camp(.~N~), ~/.emacs.d.before-emacs-camp(.~N~)   나타날 때마다 옮겨 둔 것
 
 /nix/store/…-emacs-31.1/             Emacs 본체 (nix-basecamp), 내장 .eln 포함
 ```
@@ -139,7 +142,7 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준; Linux에는 `
 | `~/.config/emacs/` 안의 경로 | 주인 |
 |---|---|
 | `early-init.el(c)`, `init.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | 모듈 (store 링크) |
-| `eln-cache/` | 위 파일들은 모듈, 패키지는 package.el |
+| `eln-cache/` | 위 파일들은 모듈, 패키지는 package.el; 다른 빌드의 하위 디렉터리는 sync가 정리 |
 | `elpa/`, `package-quickstart.el` | package.el |
 | `custom.el` | Custom |
 | `local.el` | 사용자, 호스트별; 마지막에 로드 |

@@ -32,5 +32,17 @@
     (sleep-for 1)))
 
 (ecamp-sync-phase "native-compile")
+
+;; eln-cache/ keeps one <version>-<hash>/ per Emacs build that ever ran with
+;; this directory; only the running build's is read. Drop the others (the
+;; cost of being wrong is a re-JIT if an older build comes back).
+(when (bound-and-true-p comp-native-version-dir)
+  (let ((cache (expand-file-name "eln-cache" user-emacs-directory)))
+    (when (file-directory-p cache)
+      (dolist (d (directory-files cache t "\\`[0-9]"))
+        (when (and (file-directory-p d)
+                   (not (equal (file-name-nondirectory d) comp-native-version-dir)))
+          (delete-directory d t)
+          (message "emacs-camp sync: pruned eln-cache/%s" (file-name-nondirectory d)))))))
 (package-quickstart-refresh)
 (message "emacs-camp sync: done (%d packages)" (length package-alist))

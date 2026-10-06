@@ -90,10 +90,13 @@ in
 
     # ~/.emacs and ~/.emacs.d take priority over ~/.config/emacs, so rename
     # them once; they are never removed.
+    # Every time one shows up (a tool may recreate ~/.emacs.d), not only the
+    # first: an earlier backup is kept as *.before-emacs-camp.~N~ (GNU mv
+    # --backup=numbered), and a symlink is moved as a link, its target untouched.
     home.activation.emacsCampLegacy = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       for p in "$HOME/.emacs" "$HOME/.emacs.d"; do
-        if [ -e "$p" ] && [ ! -L "$p" ] && [ ! -e "$p.before-emacs-camp" ]; then
-          run mv -v "$p" "$p.before-emacs-camp"
+        if [ -e "$p" ] || [ -L "$p" ]; then
+          run ${pkgs.coreutils}/bin/mv -vT --backup=numbered "$p" "$p.before-emacs-camp"
         fi
       done
     '';

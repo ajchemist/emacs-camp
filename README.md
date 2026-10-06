@@ -83,9 +83,13 @@ byte-compile; otherwise packages would get installed halfway through the
 compile, and the resulting `.eln` would load all of them at startup. The sync
 native-compiles `elpa/` using all cores (by default Emacs uses half, which on
 a 3-core machine is a single job), and logs the seconds spent in each phase
-(`install`, `native-compile`, `warmed`). Since an existing `~/.emacs` or
-`~/.emacs.d` takes precedence over `~/.config/emacs`, it is renamed to
-`*.before-emacs-camp`, once.
+(`install`, `native-compile`, `warmed`). It then deletes the `eln-cache/`
+subdirectories of other Emacs builds (one accumulates per build; only the
+running build's is ever read, and a returning older build just re-JITs).
+Since an existing `~/.emacs` or `~/.emacs.d` takes precedence over
+`~/.config/emacs`, every switch that finds one renames it to
+`*.before-emacs-camp`; an earlier backup becomes `*.before-emacs-camp.~N~`, and
+a symlink is moved as a link with its target left alone.
 
 ### macOS only: `.eln` warm-up
 
@@ -134,7 +138,7 @@ and no `Applications/`):
 ├── sync.log                         latest package sync, seconds per phase
 └── sync.pid                         present only during a sync
 
-~/.emacs.before-emacs-camp, ~/.emacs.d.before-emacs-camp   moved aside once, if they existed
+~/.emacs.before-emacs-camp(.~N~), ~/.emacs.d.before-emacs-camp(.~N~)   moved aside whenever they appear
 
 /nix/store/…-emacs-31.1/             the Emacs (nix-basecamp), built-in .eln included
 ```
@@ -142,7 +146,7 @@ and no `Applications/`):
 | Path in `~/.config/emacs/` | Owner |
 |---|---|
 | `early-init.el(c)`, `init.el(c)`, `user/*.el(c)`, `eln-warm` (macOS) | module (store links) |
-| `eln-cache/` | module for the files above, package.el for packages |
+| `eln-cache/` | module for the files above, package.el for packages; the sync prunes other builds' subdirectories |
 | `elpa/`, `package-quickstart.el` | package.el |
 | `custom.el` | Custom |
 | `local.el` | you, per host; loaded last |

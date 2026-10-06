@@ -37,7 +37,7 @@ jobs:
         run: echo "version=$(nix eval --raw .#packages.x86_64-linux.emacs.version)" >> "$GITHUB_OUTPUT"
       - name: Helpers parse
         run: |
-          python3 -m py_compile ci/mock-acp-agent.py
+          python3 -m py_compile ci/mock-acp-agent.py ci/test_activation.py
           bash -n ci/e2e-deploy.sh ci/eln-vetting.sh
 
   # The module-free path on every OS: lisp/ copied in, the package sync, a
@@ -134,8 +134,15 @@ jobs:
         run: '"$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/smoke.el'
       - name: agent-shell E2E (mock ACP agent)
         run: '"$EMACS" --batch --init-directory "$HOME/.config/emacs" -l ci/agent-shell-e2e.el'
-      - name: Re-deploy (idempotent)
-        run: ./ci/e2e-deploy.sh
+      - name: Re-deploy (idempotent; prunes eln-cache of other Emacs builds)
+        run: |
+          mkdir -p "$HOME/.config/emacs/eln-cache/29.1-0000000000/stale"
+          ./ci/e2e-deploy.sh
+          test ! -e "$HOME/.config/emacs/eln-cache/29.1-0000000000"
+          [ "$(ls "$HOME/.config/emacs/eln-cache" | wc -l)" -eq 1 ]
+          grep -q 'pruned eln-cache/29.1-0000000000' "${XDG_CACHE_HOME:-$HOME/.cache}/emacs-camp/sync.log"
+      - name: Legacy ~/.emacs(.d) recurring and as symlinks
+        run: python3 ci/test_activation.py
       - name: macOS .eln vetting cost (why the warm-up exists)
         if: runner.os == 'macOS'
         run: ./ci/eln-vetting.sh
