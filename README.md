@@ -203,15 +203,17 @@ would load all packages at startup.
 
 `Dockerfile` builds `ghcr.io/ajchemist/emacs-camp`:
 
-- Emacs 31.1, built from source because Debian's Emacs is too old (forge needs
-  the built-in compat 31). It is a terminal build without native compilation.
-- `lisp/` goes to `~/.config/emacs/` and `extras/` to `~/.config/emacs/extras/`.
-  No extra loads by default; turn one on with
-  `M-x customize-variable RET ecamp-extras`. The build installs packages and
-  byte-compiles `init.el` and `extras/*.el`, as the module does.
+- One deploy path: a Nix stage builds the flake's
+  `homeConfigurations.sandbox-<arch>-linux` (basecamp's Emacs plus this module)
+  and runs its Home Manager activation, so the links, `extras-default.el`,
+  compile and package sync are the module's own. Only the home and its
+  `/nix/store` closure go into a Debian slim image; Nix itself does not ship.
+- The sandbox is lightened by options, not by a second recipe:
+  `basecamp.emacs.nativeComp = false` drops gcc and libgccjit, and no extra is
+  on (`M-x customize-variable RET ecamp-extras` turns one on).
 - GitHub Actions (`.github/workflows/image.yml`) builds `latest` from main.
   It runs on every push that touches `lisp/`, `extras/`, `sync.el`,
-  `compile.el` or `Dockerfile`, and nightly at 18:00 UTC to pick up MELPA
+  `compile.el`, `module.nix`, `flake.*` or `Dockerfile`, and nightly at 18:00 UTC to pick up MELPA
   updates. A newer build cancels a running one.
 
 The Killercoda scenario runs that image (`docker run -it ... bash`). Its files
@@ -222,9 +224,6 @@ Killercoda's sync.
 
 Free Killercoda accounts get one-hour sessions with no daily limit. Visitors
 need a free Killercoda login.
-
-`binder/` is an earlier experiment with mybinder.org. It works, but a launch
-takes 9 to 11 minutes, so nothing links to it.
 
 ## Checks
 

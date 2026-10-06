@@ -19,7 +19,28 @@
       modules = [{ home-manager.sharedModules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = [ "10-prog" ]; } ]; }];
     };
     darwinHome = darwin.config.home-manager.users.fixture;
+    # The image's home (Dockerfile): the module as deployed, lightened for a
+    # sandbox. Emacs without native compilation (no gcc/libgccjit), no extras.
+    sandbox = system: basecamp.lib.mkHome {
+      user = "user"; inherit system; emacs = "nox";
+      modules = [ self.homeModules.default ({ lib, pkgs, config, ... }: {
+        basecamp.emacs.nativeComp = false;
+        # Only what the demo runs: Emacs and a git without its perl/python
+        # tools (basecamp's full git and jq, home-manager's CLI are dropped).
+        home.packages = lib.mkForce [ config.basecamp.emacs.package pkgs.gitMinimal ];
+        # Two locales instead of every glibc locale (~220 MB).
+        i18n.glibcLocales = pkgs.glibcLocales.override {
+          allLocales = false;
+          locales = [ "en_US.UTF-8/UTF-8" "ko_KR.UTF-8/UTF-8" ];
+        };
+      }) ];
+    };
   in {
+    homeConfigurations = {
+      sandbox-x86_64-linux = sandbox "x86_64-linux";
+      sandbox-aarch64-linux = sandbox "aarch64-linux";
+    };
+
     homeModules.default = ./module.nix;
     homeModules.emacs-camp = ./module.nix;
 

@@ -202,15 +202,16 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
 
 `Dockerfile`은 `ghcr.io/ajchemist/emacs-camp`를 빌드합니다.
 
-- Emacs 31.1을 소스에서 빌드합니다. Debian의 Emacs는 너무 오래돼서 forge가
-  요구하는 내장 compat 31이 없습니다. 터미널 빌드이고 native 컴파일은 하지
-  않습니다.
-- `lisp/`는 `~/.config/emacs/`로, `extras/`는 `~/.config/emacs/extras/`로
-  들어갑니다. 기본으로 로드되는 extra는 없고,
-  `M-x customize-variable RET ecamp-extras`로 켭니다. 빌드할 때 패키지를
-  설치하고, 모듈과 같은 방식으로 `init.el`과 `extras/*.el`을 byte 컴파일합니다.
+- 배포 경로는 하나입니다. Nix 단계에서 flake의
+  `homeConfigurations.sandbox-<arch>-linux`(basecamp의 Emacs + 이 모듈)를
+  빌드하고 Home Manager activation을 실행합니다. 링크, `extras-default.el`,
+  컴파일, 패키지 sync가 모두 모듈 그대로입니다. 결과인 홈과 그 `/nix/store`
+  closure만 Debian slim 이미지에 담고, Nix 자체는 넣지 않습니다.
+- 샌드박스 경량화는 별도 레시피가 아니라 옵션으로 합니다.
+  `basecamp.emacs.nativeComp = false`로 gcc와 libgccjit을 빼고, extra는 하나도
+  켜지 않습니다(`M-x customize-variable RET ecamp-extras`로 켭니다).
 - GitHub Actions(`.github/workflows/image.yml`)가 main에서 `latest`를
-  빌드합니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `Dockerfile`이
+  빌드합니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `module.nix`, `flake.*`, `Dockerfile`이
   바뀌는 push마다 돌고, MELPA 갱신을 받으려고 매일 18:00 UTC(03:00 KST)에도
   돕니다. 새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
 
@@ -222,9 +223,6 @@ Killercoda 동기화를 멈추게 합니다.
 
 무료 Killercoda 계정은 세션이 1시간이고 하루 사용 제한은 없습니다. 방문자는
 무료 Killercoda 계정으로 로그인해야 합니다.
-
-`binder/`는 mybinder.org로 해 본 이전 실험입니다. 동작은 하지만 실행까지
-9~11분이 걸려서 어디서도 링크하지 않습니다.
 
 ## 검사
 
