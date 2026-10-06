@@ -103,13 +103,12 @@ jobs:
       - name: Byte-compile as the module does
         # Only the files from lisp/, matching the module, and not the
         # package-quickstart.el that the sync wrote beside them.
-        run: emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
+        run: emacs --batch -l compile.el --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
       - name: Native-compile as the module does
         # emacsCampNativeCompile: the linked sources, :ensure off.
         run: |
           for f in lisp/*.el; do
-            emacs --batch --init-directory "$D" \
-              --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' \
+            emacs --batch --init-directory "$D" -l compile.el \
               --eval '(unless (native-comp-available-p) (kill-emacs 0))' \
               -f batch-native-compile "$D/${f#lisp/}"
           done

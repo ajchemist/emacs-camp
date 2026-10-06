@@ -10,6 +10,6 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
  && make -j"$(nproc)" && make install && rm -rf /tmp/emacs-31.1 /var/lib/apt/lists/*
 USER ${NB_USER}
 COPY --chown=${NB_UID}:${NB_GID} lisp/ /home/${NB_USER}/.config/emacs/
-COPY --chown=${NB_UID}:${NB_GID} sync.el /tmp/sync.el
+COPY --chown=${NB_UID}:${NB_GID} sync.el compile.el /tmp/
 RUN emacs --batch -l /tmp/sync.el
-RUN cd ~/.config/emacs && emacs --batch --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' -f batch-byte-compile early-init.el init.el
+RUN cd ~/.config/emacs && emacs --batch -l /tmp/compile.el -f batch-byte-compile early-init.el init.el

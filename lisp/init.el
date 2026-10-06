@@ -180,6 +180,7 @@
 ;; Plain dired keys still work; ? opens a transient of everything else.
 (use-package dirvish
   :functions dirvish-override-dired-mode
+  :defines dirvish-mode-map
   :init (with-eval-after-load 'dired (dirvish-override-dired-mode 1))
   :bind (:map dirvish-mode-map
          ("?" . dirvish-dispatch)
@@ -198,6 +199,7 @@
 ;; and barf. RET is left as newline-and-indent (paredit 26 takes it over,
 ;; which breaks RET in ielm and M-:); C-j is paredit's newline.
 (use-package paredit
+  :defines paredit-mode-map
   :hook ((emacs-lisp-mode lisp-mode lisp-interaction-mode scheme-mode
           clojure-mode ielm-mode eval-expression-minibuffer-setup) . paredit-mode)
   :bind (:map paredit-mode-map

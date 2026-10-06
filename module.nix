@@ -11,14 +11,13 @@ let
   userNames = map baseNameOf cfg.userFiles;
 
   # Compiled by the same Emacs that loads it, so a broken init breaks the switch
-  # instead of the next launch. :ensure is disabled while compiling: the
-  # sandbox is offline, and sync.el is what installs packages.
+  # instead of the next launch. compile.el turns :ensure off.
   compiled = pkgs.runCommand "emacs-camp-config" { nativeBuildInputs = [ emacs ]; } ''
     mkdir user
     cp ${./lisp}/*.el .
     ${lib.concatMapStringsSep "\n" (f: "cp ${f} user/${baseNameOf f}") cfg.userFiles}
     emacs --batch \
-      --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore) byte-compile-error-on-warn t))' \
+      -l ${./compile.el} --eval '(setq byte-compile-error-on-warn t)' \
       -f batch-byte-compile ./*.el ${lib.optionalString (cfg.userFiles != [ ]) "user/*.el"}
     mkdir -p $out/user; cp ./*.el ./*.elc $out/
     ${lib.optionalString (cfg.userFiles != [ ]) "cp user/*.el user/*.elc $out/user/"}
@@ -64,11 +63,7 @@ in
         src="$HOME/.config/emacs/$f.el"
         eln="$(${emacs}/bin/emacs --batch --eval "(when (native-comp-available-p) (princ (comp-el-to-eln-filename \"$src\")))" 2>/dev/null || true)"
         if [ -n "$eln" ] && [ ! -f "$eln" ]; then
-          # Reuse the byte-compile prelude; otherwise :ensure fires, packages
-          # download in the middle of compiling, and the resulting .eln
-          # requires all of them at startup.
-          run ${emacs}/bin/emacs --batch \
-            --eval '(progn (require (quote use-package)) (setq use-package-ensure-function (quote ignore)))' \
+          run ${emacs}/bin/emacs --batch -l ${./compile.el} \
             -f batch-native-compile "$src" \
             || echo "emacs-camp: native-compile of $src failed; Emacs will JIT it instead" >&2
           ${lib.optionalString isDarwin ''[ -f "$eln" ] && run ${elnWarm} "$(dirname "$eln")"''}
