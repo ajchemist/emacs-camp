@@ -17,7 +17,10 @@
 ;; back as NFC and writes NFD.  Emacs usually picks it already; pin it so a
 ;; language-environment change can't undo it.
 (when (eq system-type 'darwin)
-  (set-file-name-coding-system 'utf-8-hfs))
+  (set-file-name-coding-system 'utf-8-hfs)
+  ;; Shell output (ls in shell-mode, M-!) prints those names too.
+  (add-to-list 'process-coding-system-alist
+               '("\\(?:\\`\\|/\\)\\(?:ba\\|z\\)?sh\\'" . (utf-8-hfs . utf-8-unix))))
 
 ;; The hangul and hanja keys of a Korean keyboard (Linux/X), plus S-SPC as on
 ;; Windows, toggle the input method; F9 converts the hangul before point to
