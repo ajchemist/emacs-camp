@@ -1,6 +1,8 @@
 # emacs-camp
 
 [![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in-Codespaces-24292f?logo=github&logoColor=white)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
+[![Start on iximiuz Labs](https://img.shields.io/badge/Start_on-iximiuz_Labs-6c47ff?logo=docker&logoColor=white)](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
 [![Image](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml)
 
@@ -13,11 +15,32 @@ it loads. Emacs itself comes from
 [nix-basecamp](https://github.com/ajchemist/nix-basecamp), and this repository
 covers only what runs on top of it.
 
-To try it in a browser, open the
-[Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)
-and type `emacs` in its terminal. To run the same image locally, use
-`docker run --rm -it ghcr.io/ajchemist/emacs-camp`. The
-[demo image section](#demo-image-and-killercoda) has the details.
+## Playgrounds
+
+Try it in a browser, no install. Each one runs on the visitor's own account
+and its free quota; this repository only provides the buttons and their
+definitions.
+
+| | Opens | Needs |
+|---|---|---|
+| [![Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp) | a terminal; type `emacs` | free Killercoda login (1-hour sessions) |
+| [![Codespaces](https://img.shields.io/badge/Open_in-Codespaces-24292f?logo=github&logoColor=white)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1) | VS Code in the browser; its terminal is Emacs (bash from the `+` menu) | GitHub account (free Codespaces hours) |
+| [![iximiuz Labs](https://img.shields.io/badge/Start_on-iximiuz_Labs-6c47ff?logo=docker&logoColor=white)](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0) | a Docker VM; its terminal is Emacs, `C-x C-c` leaves a shell, `emacs-camp` starts it again | free iximiuz login (daily playground time) |
+| `docker run -it --rm ghcr.io/ajchemist/emacs-camp` | Emacs, locally or anywhere with Docker | Docker |
+
+Play with Docker would have been another, but it shut down on 2026-03-01.
+
+Where each one is defined:
+
+- Killercoda: the scenario lives on the `killercoda` branch, which holds
+  nothing else, and Killercoda syncs that branch. Main can't be the source:
+  its `.claude/skills` symlink points at the uncommitted `.agents/skills`,
+  and that dangling link stalls Killercoda's sync.
+- Codespaces: `.devcontainer/devcontainer.json`, on the `:debian` image
+  (`scratch` has no shell for a dev container).
+- iximiuz Labs: `playgrounds/iximiuz/manifest.yaml`. After editing it, run
+  `labctl playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`.
+- All of them run the image from [Demo image](#demo-image).
 
 ```
 nix-basecamp   Emacs binary, GUI/nox, Emacs.app, store .eln warm-up
@@ -199,7 +222,7 @@ The use-package policy (`always-ensure`, `always-defer`) is wrapped in
 bare `setq`, the compiler would expand the `.elc` with the defaults, and it
 would load all packages at startup.
 
-## Demo image and Killercoda
+## Demo image
 
 `Dockerfile` builds `ghcr.io/ajchemist/emacs-camp`:
 
@@ -218,31 +241,6 @@ would load all packages at startup.
   It runs on every push that touches `lisp/`, `extras/`, `sync.el`,
   `compile.el`, `module.nix`, `flake.*` or `Dockerfile`, and nightly at 18:00 UTC to pick up MELPA
   updates. A newer build cancels a running one.
-
-The Killercoda scenario runs that image (`docker run -it ... bash`). Its files
-live on the `killercoda` branch, which holds nothing else, and Killercoda
-syncs that branch. Main can't be the source. Its `.claude/skills` symlink
-points at the uncommitted `.agents/skills`, and that dangling link stalls
-Killercoda's sync.
-
-Free Killercoda accounts get one-hour sessions with no daily limit. Visitors
-need a free Killercoda login.
-
-### Other playgrounds
-
-- **GitHub Codespaces**:
-  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
-  `.devcontainer/devcontainer.json` runs the `:debian` image (`scratch` has no
-  shell for a dev container) as `user`. Run `emacs` in the terminal. Needs a
-  GitHub account; it uses the visitor's free Codespaces hours.
-- **iximiuz Labs**: [start the playground](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0).
-  A Docker VM whose terminal opens straight into Emacs (the image is pulled
-  while it boots); `C-x C-c` leaves a shell, `emacs-camp` starts it again.
-  Needs a free iximiuz login; it runs on the visitor's own playground time. The definition is
-  `playgrounds/iximiuz/manifest.yaml`; after editing it, run `labctl
-  playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`.
-- **Anywhere with Docker**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
-  Play with Docker shut down on 2026-03-01.
 
 ## Checks
 

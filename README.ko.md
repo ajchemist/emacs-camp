@@ -1,6 +1,8 @@
 # emacs-camp
 
 [![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in-Codespaces-24292f?logo=github&logoColor=white)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
+[![Start on iximiuz Labs](https://img.shields.io/badge/Start_on-iximiuz_Labs-6c47ff?logo=docker&logoColor=white)](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
 [![Image](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml)
 
@@ -12,11 +14,31 @@ emacs-camp는 init은 작게 두고 패키지는 넉넉히 갖춘 Emacs 런타�
 [nix-basecamp](https://github.com/ajchemist/nix-basecamp)가 제공하고, 이
 저장소는 그 위에서 돌아가는 부분만 다룹니다.
 
-브라우저에서 써 보려면
-[Killercoda playground](https://killercoda.com/emacs-camp/scenario/emacs-camp)를
-열고 터미널에 `emacs`를 입력하세요. 같은 이미지를 로컬에서 실행하려면
-`docker run --rm -it ghcr.io/ajchemist/emacs-camp`를 쓰면 됩니다. 자세한
-내용은 [데모 이미지 절](#데모-이미지와-killercoda)에 있습니다.
+## 플레이그라운드
+
+설치 없이 브라우저에서 써 볼 수 있습니다. 모두 방문자 자신의 계정과 무료
+한도로 돌고, 이 저장소는 버튼과 그 정의만 제공합니다.
+
+| | 열리는 것 | 필요한 것 |
+|---|---|---|
+| [![Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp) | 터미널. `emacs`를 입력 | 무료 Killercoda 로그인(세션 1시간) |
+| [![Codespaces](https://img.shields.io/badge/Open_in-Codespaces-24292f?logo=github&logoColor=white)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1) | 브라우저의 VS Code. 터미널이 바로 Emacs(bash는 `+` 메뉴) | GitHub 계정(무료 Codespaces 시간) |
+| [![iximiuz Labs](https://img.shields.io/badge/Start_on-iximiuz_Labs-6c47ff?logo=docker&logoColor=white)](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0) | Docker VM. 터미널이 바로 Emacs, `C-x C-c`로 셸, `emacs-camp`로 다시 실행 | 무료 iximiuz 로그인(일일 플레이그라운드 시간) |
+| `docker run -it --rm ghcr.io/ajchemist/emacs-camp` | 로컬이나 Docker가 있는 어디서나 Emacs | Docker |
+
+Play with Docker도 후보였지만 2026-03-01에 서비스를 종료했습니다.
+
+각각의 정의는 여기에 있습니다.
+
+- Killercoda: 시나리오는 다른 파일이 없는 `killercoda` 브랜치에 있고,
+  Killercoda는 이 브랜치를 동기화합니다. main은 원본으로 쓸 수 없습니다.
+  main의 `.claude/skills` 심볼릭 링크가 커밋되지 않은 `.agents/skills`를
+  가리키는데, 이 깨진 링크가 Killercoda 동기화를 멈추게 합니다.
+- Codespaces: `.devcontainer/devcontainer.json`. `:debian` 이미지를 씁니다
+  (`scratch`에는 dev container에 필요한 셸이 없습니다).
+- iximiuz Labs: `playgrounds/iximiuz/manifest.yaml`. 고친 뒤에는
+  `labctl playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`을 실행합니다.
+- 모두 [데모 이미지](#데모-이미지)의 이미지를 실행합니다.
 
 ```
 nix-basecamp   Emacs 바이너리, GUI/nox, Emacs.app, store .eln warm-up
@@ -198,7 +220,7 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
 쓰면 컴파일러가 기본값으로 `.elc`를 전개하고, 그 `.elc`는 시작할 때 패키지를
 전부 로드합니다.
 
-## 데모 이미지와 Killercoda
+## 데모 이미지
 
 `Dockerfile`은 `ghcr.io/ajchemist/emacs-camp`를 빌드합니다.
 
@@ -217,31 +239,6 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
   빌드합니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `module.nix`, `flake.*`, `Dockerfile`이
   바뀌는 push마다 돌고, MELPA 갱신을 받으려고 매일 18:00 UTC(03:00 KST)에도
   돕니다. 새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
-
-Killercoda 시나리오는 이 이미지를 실행합니다(`docker run -it ... bash`).
-시나리오 파일은 다른 파일이 없는 `killercoda` 브랜치에 있고, Killercoda는 이
-브랜치를 동기화합니다. main은 원본으로 쓸 수 없습니다. main의 `.claude/skills`
-심볼릭 링크가 커밋되지 않은 `.agents/skills`를 가리키는데, 이 깨진 링크가
-Killercoda 동기화를 멈추게 합니다.
-
-무료 Killercoda 계정은 세션이 1시간이고 하루 사용 제한은 없습니다. 방문자는
-무료 Killercoda 계정으로 로그인해야 합니다.
-
-### 다른 플레이그라운드
-
-- **GitHub Codespaces**:
-  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
-  `.devcontainer/devcontainer.json`이 `:debian` 이미지를 `user`로 실행합니다
-  (`scratch`에는 dev container에 필요한 셸이 없습니다). 터미널에서 `emacs`를
-  실행하면 됩니다. GitHub 계정이 필요하고, 방문자의 무료 Codespaces 시간을 씁니다.
-- **iximiuz Labs**: [플레이그라운드 시작](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0).
-  부팅하면서 이미지를 받아 두는 Docker VM이고, 터미널을 열면 바로 Emacs가
-  뜹니다. `C-x C-c`로 셸로 나오고, `emacs-camp`로 다시 띄웁니다. 무료 iximiuz
-  로그인이 필요하고, 방문자 자신의 플레이그라운드 시간으로 돕니다. 정의는 `playgrounds/iximiuz/manifest.yaml`이고, 고친
-  뒤에는 `labctl playground update emacs-camp-7b268ff0 -f
-  playgrounds/iximiuz/manifest.yaml`을 실행합니다.
-- **Docker가 있는 곳 어디서나**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
-  Play with Docker는 2026-03-01에 서비스를 종료했습니다.
 
 ## 검사
 
