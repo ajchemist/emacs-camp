@@ -238,7 +238,7 @@ need a free Killercoda login.
 - **iximiuz Labs**: [start the playground](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0).
   A Docker VM whose terminal opens straight into Emacs (the image is pulled
   while it boots); `C-x C-c` leaves a shell, `emacs-camp` starts it again.
-  Needs a free iximiuz login. The definition is
+  Needs a free iximiuz login; it runs on the visitor's own playground time. The definition is
   `playgrounds/iximiuz/manifest.yaml`; after editing it, run `labctl
   playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`.
 - **Anywhere with Docker**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.

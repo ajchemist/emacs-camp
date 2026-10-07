@@ -237,7 +237,7 @@ Killercoda 동기화를 멈추게 합니다.
 - **iximiuz Labs**: [플레이그라운드 시작](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0).
   부팅하면서 이미지를 받아 두는 Docker VM이고, 터미널을 열면 바로 Emacs가
   뜹니다. `C-x C-c`로 셸로 나오고, `emacs-camp`로 다시 띄웁니다. 무료 iximiuz
-  로그인이 필요합니다. 정의는 `playgrounds/iximiuz/manifest.yaml`이고, 고친
+  로그인이 필요하고, 방문자 자신의 플레이그라운드 시간으로 돕니다. 정의는 `playgrounds/iximiuz/manifest.yaml`이고, 고친
   뒤에는 `labctl playground update emacs-camp-7b268ff0 -f
   playgrounds/iximiuz/manifest.yaml`을 실행합니다.
 - **Docker가 있는 곳 어디서나**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
