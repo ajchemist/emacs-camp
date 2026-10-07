@@ -247,8 +247,6 @@
 (when (eq system-type 'darwin)
   (setq ns-command-modifier 'meta        ; Cmd is Meta
         ns-alternate-modifier 'super))   ; Option is Super
-(global-set-key [C-wheel-up] #'text-scale-decrease)
-(global-set-key [C-wheel-down] #'text-scale-increase)
 
 ;;; User layer and free zone
 
