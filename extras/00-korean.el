@@ -1,6 +1,6 @@
 ;;; 00-korean.el --- emacs-camp: Korean input and text  -*- lexical-binding: t -*-
 
-;; Loaded when "00-korean" is in `ecamp-extras' (emacs-camp.korean.enable
+;; Loaded when "00-korean" is in `ecamp-extras' (emacs-camp.extras
 ;; sets that default), before user/*.el, so a downstream file can override
 ;; anything here.
 

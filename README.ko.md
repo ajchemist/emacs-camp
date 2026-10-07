@@ -99,12 +99,14 @@ inputs.emacs-camp = {
 # basecamp.lib.mkDarwin / mkHome으로 만든 home, basecamp.emacs.enable = true에서:
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
-emacs-camp.korean.enable = true;  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
-emacs-camp.extras = [ "10-prog" ];  # 무지개 괄호, eval 깜박임, 괄호 자동 닫기, 화면 밖 여는 괄호 표시
+emacs-camp.extras = [
+  "00-korean"  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
+  "10-prog"    # 무지개 괄호, eval 깜박임, 괄호 자동 닫기, 화면 밖 여는 괄호 표시
+];
 ```
 
 `extras/*.el`은 모두 `~/.config/emacs/extras/`에 배포되지만, `ecamp-extras`에
-이름이 있어야만 로드됩니다. `emacs-camp.extras`와 `korean.enable` 같은 옵션은 그 기본값만 정합니다
+이름이 있어야만 로드됩니다. `emacs-camp.extras`는 그 기본값만 정합니다
 (`extras-default.el`에 기록). 나중에 켜고 끄려면
 `M-x customize-variable RET ecamp-extras`를 쓰면 되고, `custom.el`에 저장됩니다.
 배포 때 byte/native 컴파일은 기본으로 켜진 extras만 합니다. 나머지는 `.el`로만

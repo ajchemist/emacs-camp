@@ -10,7 +10,7 @@ let
   elnWarm = "${config.basecamp.emacs.warmProgram}/bin/eln-warm";
   userNames = map baseNameOf cfg.userFiles;
   extraNames = lib.attrNames (lib.filterAttrs (n: _: lib.hasSuffix ".el" n) (builtins.readDir ./extras));
-  extrasDefault = lib.unique (lib.optional cfg.korean.enable "00-korean" ++ cfg.extras);
+  extrasDefault = cfg.extras;
 
   # Compiled by the same Emacs that loads it, so a broken init breaks the switch
   # instead of the next launch. compile.el turns :ensure off. Extras are
@@ -43,6 +43,10 @@ let
   sourceOnly = map (n: "extras/${n}") (lib.subtractLists extrasDefault (map (lib.removeSuffix ".el") extraNames));
 in
 {
+  imports = [
+    (lib.mkRemovedOptionModule [ "emacs-camp" "korean" "enable" ] "Use emacs-camp.extras = [ \"00-korean\" ] instead (docs/adr/0003-extras-single-option.md).")
+  ];
+
   options.emacs-camp = {
     enable = lib.mkOption {
       type = lib.types.bool;
@@ -57,10 +61,9 @@ in
     extras = lib.mkOption {
       type = lib.types.listOf (lib.types.enum (map (lib.removeSuffix ".el") extraNames));
       default = [ ];
-      example = [ "10-prog" ];
+      example = [ "00-korean" "10-prog" ];
       description = "extras/*.el (by name, no .el) that load by default. All are always deployed; M-x customize-variable ecamp-extras changes the choice later.";
     };
-    korean.enable = lib.mkEnableOption "Korean defaults (extras/00-korean.el) loaded by default: hangul input on C-\\, UTF-8 over EUC-KR, hangul/hanja keys. Always deployed; M-x customize-variable ecamp-extras toggles it later";
   };
 
   config = lib.mkIf cfg.enable {

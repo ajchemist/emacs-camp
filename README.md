@@ -100,12 +100,14 @@ inputs.emacs-camp = {
 # in a home built with basecamp.lib.mkDarwin / mkHome, basecamp.emacs.enable = true:
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
-emacs-camp.korean.enable = true;  # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys
-emacs-camp.extras = [ "10-prog" ];  # rainbow parens, eval flash, auto-closed brackets, off-screen paren context
+emacs-camp.extras = [
+  "00-korean"  # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys
+  "10-prog"    # rainbow parens, eval flash, auto-closed brackets, off-screen paren context
+];
 ```
 
 Every `extras/*.el` is deployed to `~/.config/emacs/extras/`, but none loads
-unless named in `ecamp-extras`. `emacs-camp.extras` and options like `korean.enable` only set its
+unless named in `ecamp-extras`. `emacs-camp.extras` only sets its
 default (written to `extras-default.el`). Turn extras on or off later with
 `M-x customize-variable RET ecamp-extras`, which saves to `custom.el`.
 Only default-on extras are byte- and native-compiled at deploy; the others

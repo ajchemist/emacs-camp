@@ -6,7 +6,7 @@
 
 - **패키지:** extra는 자기에게 필요한 패키지를 extra 안의 `use-package`(`:ensure`)로 직접 가져온다.
   `init.el` 본체로 옮길 필요는 없다.
-- **배포 기본값으로 켠 extra**(`emacs-camp.extras`, `korean.enable` → `extras-default.el`):
+- **배포 기본값으로 켠 extra**(`emacs-camp.extras` → `extras-default.el`):
   배포할 때 Nix 빌드에서 byte 컴파일(warning을 error로 취급)하고, `.el`과 `.elc`를 링크하며,
   activation에서 native 컴파일하고, 그 switch의 sync에서 패키지를 설치하고 elpa를 컴파일한다.
 - **켜지 않은 extra:** `.el`만 배포한다. 컴파일도 패키지 설치도 하지 않는다.

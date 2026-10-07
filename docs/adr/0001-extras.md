@@ -1,6 +1,6 @@
 # 0001: extras — 늘 배포하고, 켤지는 사용자가 정한다
 
-날짜: 2026-10-06 · 상태: 채택
+날짜: 2026-10-06 · 상태: 채택 · 기본값 옵션은 [0003](0003-extras-single-option.md)으로 하나로 정리
 
 ## extras에 넣는 것
 
@@ -20,7 +20,7 @@
 - 컴파일·패키지 설치: 켠 extra만. [0002](0002-extras-opt-in-cost.md).
 - 로드: `ecamp-extras`(defcustom)에 이름이 있는 것만 로드한다.
   순서는 `custom.el` → extras → `user/*.el` → `local.el`.
-- 기본값: Nix 옵션(예: `emacs-camp.korean.enable`)은 `extras-default.el`에
+- 기본값: Nix 옵션 `emacs-camp.extras`는 `extras-default.el`에
   기본값만 적는다. Docker 이미지는 기본값이 없으므로 아무것도 로드하지 않는다.
 - 나중에 바꾸기: `M-x customize-variable RET ecamp-extras`.
   `custom.el`에 저장되고 배포 기본값보다 우선한다.
