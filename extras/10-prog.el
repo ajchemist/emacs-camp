@@ -7,8 +7,10 @@
 ;;   built-in pulse.el, as eval-sexp-fu did (10 x 0.03s ~ its 0.29s flash).
 ;; Matching parens need nothing here: show-paren-mode is on by default.
 
+;; ielm input is fontified in a hidden emacs-lisp-mode buffer (ielm-fontify-input-enable),
+;; so the mode goes there; on ielm-mode itself it colors nothing.
 (use-package rainbow-delimiters
-  :hook ((prog-mode ielm-mode) . rainbow-delimiters-mode))
+  :hook ((prog-mode ielm-indirect-setup) . rainbow-delimiters-mode))
 
 (setopt pulse-iterations 10 pulse-delay 0.03)
 
