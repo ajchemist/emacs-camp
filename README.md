@@ -1,8 +1,5 @@
 # emacs-camp
 
-[![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in-Codespaces-24292f?logo=github&logoColor=white)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
-[![Start on iximiuz Labs](https://img.shields.io/badge/Start_on-iximiuz_Labs-6c47ff?logo=docker&logoColor=white)](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
 [![Image](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml)
 
@@ -237,7 +234,8 @@ would load all packages at startup.
   `basecamp.emacs.nativeComp = false` drops gcc and libgccjit, a bare
   `systemctl` keeps systemd out, git is `gitMinimal`, and no extra is
   on (`M-x customize-variable RET ecamp-extras` turns one on).
-- GitHub Actions (`.github/workflows/image.yml`) builds `latest` from main.
+- GitHub Actions (`.github/workflows/image.yml`) builds both tags from main for
+  amd64 and arm64, each on a native runner, and joins them per tag.
   It runs on every push that touches `lisp/`, `extras/`, `sync.el`,
   `compile.el`, `module.nix`, `flake.*` or `Dockerfile`, and nightly at 18:00 UTC to pick up MELPA
   updates. A newer build cancels a running one.

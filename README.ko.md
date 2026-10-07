@@ -1,8 +1,5 @@
 # emacs-camp
 
-[![Try it on Killercoda](https://img.shields.io/badge/Try_it-Killercoda-1e90ff?logo=gnuemacs&logoColor=white)](https://killercoda.com/emacs-camp/scenario/emacs-camp)
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in-Codespaces-24292f?logo=github&logoColor=white)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
-[![Start on iximiuz Labs](https://img.shields.io/badge/Start_on-iximiuz_Labs-6c47ff?logo=docker&logoColor=white)](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0)
 [![CI](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/ci.yml)
 [![Image](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml/badge.svg)](https://github.com/ajchemist/emacs-camp/actions/workflows/image.yml)
 
@@ -235,8 +232,8 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
   `basecamp.emacs.nativeComp = false`로 gcc와 libgccjit을, `systemctl`을 이름만
   두어 systemd를 빼고, git은 `gitMinimal`을 쓰며, extra는 하나도
   켜지 않습니다(`M-x customize-variable RET ecamp-extras`로 켭니다).
-- GitHub Actions(`.github/workflows/image.yml`)가 main에서 `latest`를
-  빌드합니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `module.nix`, `flake.*`, `Dockerfile`이
+- GitHub Actions(`.github/workflows/image.yml`)가 main에서 두 태그를 amd64와
+  arm64로 각각 네이티브 러너에서 빌드해 태그마다 하나로 묶습니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `module.nix`, `flake.*`, `Dockerfile`이
   바뀌는 push마다 돌고, MELPA 갱신을 받으려고 매일 18:00 UTC(03:00 KST)에도
   돕니다. 새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
 
