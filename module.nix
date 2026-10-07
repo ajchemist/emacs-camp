@@ -23,6 +23,9 @@ let
     cp ${./extras}/*.el extras/
     echo ';;; -*- lexical-binding: t -*-' > extras-default.el
     echo '(defvar ecamp-extras-default (quote (${lib.concatMapStringsSep " " (n: ''"${n}"'') extrasDefault})))' >> extras-default.el
+    ${lib.optionalString isDarwin ''
+      echo '(defvar ecamp-gnu-ls "${pkgs.coreutils}/bin/ls")' >> extras-default.el
+    ''}
     ${lib.concatMapStringsSep "\n" (f: "cp ${f} user/${baseNameOf f}") cfg.userFiles}
     emacs --batch \
       -l ${./compile.el} --eval '(setq byte-compile-error-on-warn t)' \

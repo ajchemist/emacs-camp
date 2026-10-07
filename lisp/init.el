@@ -172,10 +172,6 @@
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file))
 
-;; macOS /bin/ls has no --dired; GNU ls from coreutils ships as gls there.
-(when-let* ((gls (executable-find "gls")))
-  (setq insert-directory-program gls))
-
 ;; dirvish takes over dired the first time dired loads, not at startup: the
 ;; first C-x d or C-x C-j pulls in dired, then dirvish, then runs as dirvish.
 ;; Plain dired keys still work; ? opens a transient of everything else.
@@ -261,6 +257,11 @@
 ;; from emacs-camp.korean.enable and the like); M-x customize-variable
 ;; ecamp-extras overrides that default in custom.el. Rules: docs/adr/0001-extras.md, 0002.
 (load (locate-user-emacs-file "extras-default") 'noerror 'nomessage)
+;; macOS /bin/ls has no --dired or GNU sort options (dirvish quicksort); the
+;; module writes nix coreutils' ls into extras-default.el. Elsewhere ls is GNU.
+(defvar ecamp-gnu-ls nil "GNU ls the deploy provides, or nil to keep the default.")
+(when ecamp-gnu-ls
+  (setq insert-directory-program ecamp-gnu-ls))
 (defvar ecamp-extras-default nil
   "Extras the deploy turned on; the default of `ecamp-extras'.")
 (defcustom ecamp-extras ecamp-extras-default
