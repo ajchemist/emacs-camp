@@ -259,7 +259,7 @@
 ;; extras/*.el are always deployed but load only when named in `ecamp-extras'.
 ;; Its default comes from extras-default.el (the Home Manager module writes it
 ;; from emacs-camp.korean.enable and the like); M-x customize-variable
-;; ecamp-extras overrides that default in custom.el. Rules: docs/adr/0001-extras.md.
+;; ecamp-extras overrides that default in custom.el. Rules: docs/adr/0001-extras.md, 0002.
 (load (locate-user-emacs-file "extras-default") 'noerror 'nomessage)
 (defvar ecamp-extras-default nil
   "Extras the deploy turned on; the default of `ecamp-extras'.")

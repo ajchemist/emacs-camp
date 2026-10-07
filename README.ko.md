@@ -107,6 +107,9 @@ emacs-camp.extras = [ "10-prog" ];  # 무지개 괄호, eval 깜박임, 괄호 �
 이름이 있어야만 로드됩니다. `emacs-camp.extras`와 `korean.enable` 같은 옵션은 그 기본값만 정합니다
 (`extras-default.el`에 기록). 나중에 켜고 끄려면
 `M-x customize-variable RET ecamp-extras`를 쓰면 되고, `custom.el`에 저장됩니다.
+배포 때 byte/native 컴파일은 기본으로 켜진 extras만 합니다. 나머지는 `.el`로만
+배포되고, 켜면 처음 로드할 때 native 컴파일됩니다. extra는 자기 패키지를
+`use-package`로 직접 가져올 수 있고, 켠 extra만 설치합니다(docs/adr/0002-extras-opt-in-cost.md).
 
 모듈이 basecamp에서 쓰는 것은 계약(`basecamp.emacs.package`,
 `.warmProgram`)뿐입니다. switch할 때마다 아래 작업을 합니다.

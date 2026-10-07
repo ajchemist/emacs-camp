@@ -108,6 +108,10 @@ Every `extras/*.el` is deployed to `~/.config/emacs/extras/`, but none loads
 unless named in `ecamp-extras`. `emacs-camp.extras` and options like `korean.enable` only set its
 default (written to `extras-default.el`). Turn extras on or off later with
 `M-x customize-variable RET ecamp-extras`, which saves to `custom.el`.
+Only default-on extras are byte- and native-compiled at deploy; the others
+ship as `.el` and are native-compiled on first load once turned on.
+An extra may bring its own packages with `use-package`; only enabled extras
+install them (docs/adr/0002-extras-opt-in-cost.md).
 
 The module depends on nothing from basecamp beyond its contract
 (`basecamp.emacs.package`, `.warmProgram`). Every switch does the following:

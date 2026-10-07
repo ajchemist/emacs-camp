@@ -11,12 +11,16 @@
 
   outputs = { self, basecamp, ... }:
   let
+    # Fixtures turn every extra on: only default-on extras compile, so this
+    # is what keeps all of them compiling in CI.
+    allExtras = map (n: builtins.substring 0 (builtins.stringLength n - 3) n)
+      (builtins.filter (n: builtins.match ".*\\.el" n != null) (builtins.attrNames (builtins.readDir ./extras)));
     linuxHome = basecamp.lib.mkHome {
-      user = "fixture"; emacs = "nox"; modules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = [ "10-prog" ]; } ];
+      user = "fixture"; emacs = "nox"; modules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = allExtras; } ];
     };
     darwin = basecamp.lib.mkDarwin {
       user = "fixture"; emacs = "gui";
-      modules = [{ home-manager.sharedModules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = [ "10-prog" ]; } ]; }];
+      modules = [{ home-manager.sharedModules = [ self.homeModules.default { emacs-camp.korean.enable = true; emacs-camp.extras = allExtras; } ]; }];
     };
     darwinHome = darwin.config.home-manager.users.fixture;
     # The image's home (Dockerfile): the module as deployed, lightened for a

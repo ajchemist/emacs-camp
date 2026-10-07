@@ -10,10 +10,13 @@ let
   elnWarm = "${config.basecamp.emacs.warmProgram}/bin/eln-warm";
   userNames = map baseNameOf cfg.userFiles;
   extraNames = lib.attrNames (lib.filterAttrs (n: _: lib.hasSuffix ".el" n) (builtins.readDir ./extras));
-  extrasDefault = lib.optional cfg.korean.enable "00-korean" ++ cfg.extras;
+  extrasDefault = lib.unique (lib.optional cfg.korean.enable "00-korean" ++ cfg.extras);
 
   # Compiled by the same Emacs that loads it, so a broken init breaks the switch
-  # instead of the next launch. compile.el turns :ensure off.
+  # instead of the next launch. compile.el turns :ensure off. Extras are
+  # compiled only when on by default; the rest ship as source (one turned on
+  # later with customize loads the .el, native-compiled on first load).
+  # The flake fixtures turn every extra on, so all still compile in CI.
   compiled = pkgs.runCommand "emacs-camp-config" { nativeBuildInputs = [ emacs ]; } ''
     mkdir user extras
     cp ${./lisp}/*.el .
@@ -23,15 +26,18 @@ let
     ${lib.concatMapStringsSep "\n" (f: "cp ${f} user/${baseNameOf f}") cfg.userFiles}
     emacs --batch \
       -l ${./compile.el} --eval '(setq byte-compile-error-on-warn t)' \
-      -f batch-byte-compile ./*.el extras/*.el ${lib.optionalString (cfg.userFiles != [ ]) "user/*.el"}
-    mkdir -p $out/user $out/extras; cp ./*.el ./*.elc $out/; cp extras/*.el extras/*.elc $out/extras/
+      -f batch-byte-compile ./*.el ${lib.concatMapStringsSep " " (n: "extras/${n}.el") extrasDefault} ${lib.optionalString (cfg.userFiles != [ ]) "user/*.el"}
+    mkdir -p $out/user $out/extras; cp ./*.el ./*.elc $out/; cp extras/*.el $out/extras/
+    ${lib.concatMapStringsSep "\n" (n: "cp extras/${n}.elc $out/extras/") extrasDefault}
     ${lib.optionalString (cfg.userFiles != [ ]) "cp user/*.el user/*.elc $out/user/"}
   '';
 
-  # All sources that get linked: early-init, init, extras-default, extras/*, user/*.
-  linked = [ "early-init" "init" "extras-default" ]
-    ++ map (n: "extras/${lib.removeSuffix ".el" n}") extraNames
+  # Compiled (.el + .elc linked, native-compiled on switch): early-init, init,
+  # extras-default, the default-on extras, user/*. Other extras: .el only.
+  compiledNames = [ "early-init" "init" "extras-default" ]
+    ++ map (n: "extras/${n}") extrasDefault
     ++ map (n: "user/${lib.removeSuffix ".el" n}") userNames;
+  sourceOnly = map (n: "extras/${n}") (lib.subtractLists extrasDefault (map (lib.removeSuffix ".el") extraNames));
 in
 {
   options.emacs-camp = {
@@ -62,7 +68,7 @@ in
 
     # Only individual links; ~/.config/emacs remains a normal writable directory.
     xdg.configFile = lib.listToAttrs (map (f: lib.nameValuePair "emacs/${f}" { source = "${compiled}/${f}"; })
-      (lib.concatMap (n: [ "${n}.el" "${n}.elc" ]) linked))
+      (lib.concatMap (n: [ "${n}.el" "${n}.elc" ]) compiledNames ++ map (n: "${n}.el") sourceOnly))
       // lib.optionalAttrs isDarwin { "emacs/eln-warm".source = elnWarm; };
 
     # An .eln's name depends on the path the source is loaded from
@@ -70,7 +76,7 @@ in
     # content changes and warm it immediately on macOS (init loads before a
     # startup hook would get the chance).
     home.activation.emacsCampNativeCompile = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-      for f in ${lib.escapeShellArgs linked}; do
+      for f in ${lib.escapeShellArgs compiledNames}; do
         src="$HOME/.config/emacs/$f.el"
         eln="$(${emacs}/bin/emacs --batch --eval "(when (native-comp-available-p) (princ (comp-el-to-eln-filename \"$src\")))" 2>/dev/null || true)"
         if [ -n "$eln" ] && [ ! -f "$eln" ]; then

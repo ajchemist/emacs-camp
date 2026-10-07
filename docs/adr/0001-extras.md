@@ -17,6 +17,7 @@
 
 - 배포: 모든 `extras/*.el`은 opt-in 여부와 상관없이 항상
   `~/.config/emacs/extras/`에 배포된다 (Nix 모듈, Docker 이미지 모두).
+- 컴파일·패키지 설치: 켠 extra만. [0002](0002-extras-opt-in-cost.md).
 - 로드: `ecamp-extras`(defcustom)에 이름이 있는 것만 로드한다.
   순서는 `custom.el` → extras → `user/*.el` → `local.el`.
 - 기본값: Nix 옵션(예: `emacs-camp.korean.enable`)은 `extras-default.el`에
@@ -24,10 +25,7 @@
 - 나중에 바꾸기: `M-x customize-variable RET ecamp-extras`.
   `custom.el`에 저장되고 배포 기본값보다 우선한다.
 
-## 제약: extra는 새 패키지를 요구하지 않는다
+## ~~제약: extra는 새 패키지를 요구하지 않는다~~
 
-`sync.el`은 켜진 extras만 소스로 읽어 `:ensure` 패키지를 설치한다. 배포 뒤에
-켠 extra의 패키지는 다음 sync까지 설치되지 않는다. 그래서 **extra는
-`:ensure`로 패키지를 새로 끌어오지 않는다.** 내장 기능이나 `init.el`이 이미
-설치하는 패키지만 쓴다. 패키지가 필요한 취향은 `init.el` 본체에 넣을지부터
-따진다.
+[0002](0002-extras-opt-in-cost.md)로 대체됐다(2026-10-07). extra는 자기 패키지를
+`use-package`로 직접 가져오고, 켠 extra만 설치·컴파일된다.
