@@ -234,10 +234,12 @@ Killercoda 동기화를 멈추게 합니다.
   `.devcontainer/devcontainer.json`이 `:debian` 이미지를 `user`로 실행합니다
   (`scratch`에는 dev container에 필요한 셸이 없습니다). 터미널에서 `emacs`를
   실행하면 됩니다. GitHub 계정이 필요하고, 방문자의 무료 Codespaces 시간을 씁니다.
-- **iximiuz Labs**: `playgrounds/iximiuz/manifest.yaml`은 `docker` 베이스 위에서
-  이미지를 받아 두는 플레이그라운드입니다. 소유자가 `labctl playground create
-  emacs-camp --base docker -f manifest.yaml`로 만들고, 방문자는 그 안에서
-  `docker run -it --rm ghcr.io/ajchemist/emacs-camp`를 실행합니다.
+- **iximiuz Labs**: [플레이그라운드 시작](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0).
+  부팅하면서 이미지를 받아 두는 Docker VM이고, 터미널을 열면 바로 Emacs가
+  뜹니다. `C-x C-c`로 셸로 나오고, `emacs-camp`로 다시 띄웁니다. 무료 iximiuz
+  로그인이 필요합니다. 정의는 `playgrounds/iximiuz/manifest.yaml`이고, 고친
+  뒤에는 `labctl playground update emacs-camp-7b268ff0 -f
+  playgrounds/iximiuz/manifest.yaml`을 실행합니다.
 - **Docker가 있는 곳 어디서나**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
   Play with Docker는 2026-03-01에 서비스를 종료했습니다.
 

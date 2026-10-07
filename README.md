@@ -235,10 +235,12 @@ need a free Killercoda login.
   `.devcontainer/devcontainer.json` runs the `:debian` image (`scratch` has no
   shell for a dev container) as `user`. Run `emacs` in the terminal. Needs a
   GitHub account; it uses the visitor's free Codespaces hours.
-- **iximiuz Labs**: `playgrounds/iximiuz/manifest.yaml` is a playground on the
-  `docker` base that pulls the image. The owner creates it with `labctl
-  playground create emacs-camp --base docker -f manifest.yaml`; visitors run
-  `docker run -it --rm ghcr.io/ajchemist/emacs-camp` there.
+- **iximiuz Labs**: [start the playground](https://labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0).
+  A Docker VM whose terminal opens straight into Emacs (the image is pulled
+  while it boots); `C-x C-c` leaves a shell, `emacs-camp` starts it again.
+  Needs a free iximiuz login. The definition is
+  `playgrounds/iximiuz/manifest.yaml`; after editing it, run `labctl
+  playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`.
 - **Anywhere with Docker**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
   Play with Docker shut down on 2026-03-01.
 

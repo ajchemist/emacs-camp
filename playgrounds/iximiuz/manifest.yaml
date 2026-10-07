@@ -1,25 +1,63 @@
-# iximiuz Labs playground: the docker base, pulling and running the image.
-# Create:  labctl playground create emacs-camp --base docker -f manifest.yaml
-# Update:  labctl playground update emacs-camp -f manifest.yaml
-# The machine name must match the docker base's (check with
-# `labctl playground manifest docker`).
+# iximiuz Labs playground: a Docker VM whose terminal opens straight into
+# emacs-camp (ghcr.io/ajchemist/emacs-camp). Quitting Emacs leaves a shell;
+# `emacs-camp` starts it again.
+#   labctl playground create emacs-camp -f manifest.yaml   (first time)
+#   labctl playground update emacs-camp-7b268ff0 -f manifest.yaml (live: labs.iximiuz.com/playgrounds/emacs-camp-7b268ff0)
 kind: playground
 name: emacs-camp
 base: docker
 title: emacs-camp
-description: Emacs 31 with the emacs-camp configuration, in a terminal.
+description: Emacs 31 with the emacs-camp configuration, opened in the terminal.
 categories:
   - linux
+markdown: |-
+  The terminal opens [emacs-camp](https://github.com/ajchemist/emacs-camp):
+  Emacs 31 with its packages installed and compiled, in a container.
+  `C-x C-c` quits to a shell; `emacs-camp` starts it again.
 playground:
+  networks:
+    - name: local
+      subnet: 172.16.0.0/24
+  machines:
+    - name: docker-01
+      users:
+        - name: root
+        - name: laborant
+          default: true
+      drives:
+        - source: docker
+          mount: /
+      network:
+        interfaces:
+          - network: local
+      resources:
+        cpuCount: 2
+        ramSize: 4GiB
+  tabs:
+    - id: terminal-docker-01
+      kind: terminal
+      name: Emacs
+      machine: docker-01
   initTasks:
-    pull:
+    emacs_camp:
       init: true
       machine: docker-01
       user: root
-      run: docker pull ghcr.io/ajchemist/emacs-camp:latest
-  tabs:
-    - kind: terminal
-      machine: docker-01
+      timeout_seconds: 300
+      run: |
+        docker pull ghcr.io/ajchemist/emacs-camp:latest
+        cat >/usr/local/bin/emacs-camp <<'EOF'
+        #!/bin/sh
+        exec docker run -it --rm --name "emacs-camp-$$" ghcr.io/ajchemist/emacs-camp:latest "$@"
+        EOF
+        chmod +x /usr/local/bin/emacs-camp
+        # Each new terminal starts in Emacs once; the shell stays underneath.
+        cat >>/home/laborant/.bashrc <<'EOF'
+        if [ -t 0 ] && [ -z "$EMACS_CAMP_SHELL" ]; then
+          export EMACS_CAMP_SHELL=1
+          emacs-camp
+        fi
+        EOF
   accessControl:
     canList: [anyone]
     canRead: [anyone]
