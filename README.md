@@ -228,6 +228,20 @@ Killercoda's sync.
 Free Killercoda accounts get one-hour sessions with no daily limit. Visitors
 need a free Killercoda login.
 
+### Other playgrounds
+
+- **GitHub Codespaces**:
+  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp)
+  `.devcontainer/devcontainer.json` runs the `:debian` image (`scratch` has no
+  shell for a dev container) as `user`. Run `emacs` in the terminal. Needs a
+  GitHub account; it uses the visitor's free Codespaces hours.
+- **iximiuz Labs**: `playgrounds/iximiuz/manifest.yaml` is a playground on the
+  `docker` base that pulls the image. The owner creates it with `labctl
+  playground create emacs-camp --base docker -f manifest.yaml`; visitors run
+  `docker run -it --rm ghcr.io/ajchemist/emacs-camp` there.
+- **Anywhere with Docker**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
+  Play with Docker shut down on 2026-03-01.
+
 ## Checks
 
 For each platform, `nix flake check` builds a home from basecamp's Emacs plus

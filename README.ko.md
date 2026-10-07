@@ -227,6 +227,20 @@ Killercoda 동기화를 멈추게 합니다.
 무료 Killercoda 계정은 세션이 1시간이고 하루 사용 제한은 없습니다. 방문자는
 무료 Killercoda 계정으로 로그인해야 합니다.
 
+### 다른 플레이그라운드
+
+- **GitHub Codespaces**:
+  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp)
+  `.devcontainer/devcontainer.json`이 `:debian` 이미지를 `user`로 실행합니다
+  (`scratch`에는 dev container에 필요한 셸이 없습니다). 터미널에서 `emacs`를
+  실행하면 됩니다. GitHub 계정이 필요하고, 방문자의 무료 Codespaces 시간을 씁니다.
+- **iximiuz Labs**: `playgrounds/iximiuz/manifest.yaml`은 `docker` 베이스 위에서
+  이미지를 받아 두는 플레이그라운드입니다. 소유자가 `labctl playground create
+  emacs-camp --base docker -f manifest.yaml`로 만들고, 방문자는 그 안에서
+  `docker run -it --rm ghcr.io/ajchemist/emacs-camp`를 실행합니다.
+- **Docker가 있는 곳 어디서나**: `docker run -it --rm ghcr.io/ajchemist/emacs-camp`.
+  Play with Docker는 2026-03-01에 서비스를 종료했습니다.
+
 ## 검사
 
 `nix flake check`는 플랫폼마다 basecamp의 Emacs와 이 모듈로 home을 빌드하고,

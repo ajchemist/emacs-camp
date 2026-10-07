@@ -1,0 +1,26 @@
+# iximiuz Labs playground: the docker base, pulling and running the image.
+# Create:  labctl playground create emacs-camp --base docker -f manifest.yaml
+# Update:  labctl playground update emacs-camp -f manifest.yaml
+# The machine name must match the docker base's (check with
+# `labctl playground manifest docker`).
+kind: playground
+name: emacs-camp
+base: docker
+title: emacs-camp
+description: Emacs 31 with the emacs-camp configuration, in a terminal.
+categories:
+  - linux
+playground:
+  initTasks:
+    pull:
+      init: true
+      machine: docker-01
+      user: root
+      run: docker pull ghcr.io/ajchemist/emacs-camp:latest
+  tabs:
+    - kind: terminal
+      machine: docker-01
+  accessControl:
+    canList: [anyone]
+    canRead: [anyone]
+    canStart: [anyone]

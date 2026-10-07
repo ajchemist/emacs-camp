@@ -1,0 +1,8 @@
+{
+  "name": "emacs-camp",
+  "image": "ghcr.io/ajchemist/emacs-camp:debian",
+  "remoteUser": "user",
+  "containerUser": "user",
+  "updateRemoteUserUID": false,
+  "postAttachCommand": "echo 'Run emacs (C-x C-c quits).'"
+}
