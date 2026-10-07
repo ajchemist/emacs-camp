@@ -101,7 +101,7 @@ inputs.emacs-camp = {
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.korean.enable = true;  # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys
-emacs-camp.extras = [ "10-prog" ];  # rainbow parens and eval flash in code buffers and ielm
+emacs-camp.extras = [ "10-prog" ];  # rainbow parens, eval flash, auto-closed brackets, off-screen paren context
 ```
 
 Every `extras/*.el` is deployed to `~/.config/emacs/extras/`, but none loads

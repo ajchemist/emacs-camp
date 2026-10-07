@@ -4,13 +4,18 @@
 ;; ielm (a comint buffer, not prog-mode):
 ;; - rainbow-delimiters colors nesting (init.el installs it, this turns it on);
 ;; - C-x C-e flashes the sexp it evaluated and C-M-x the defun, on the
-;;   built-in pulse.el, as eval-sexp-fu did (10 x 0.03s ~ its 0.29s flash).
-;; Matching parens need nothing here: show-paren-mode is on by default.
+;;   built-in pulse.el, as eval-sexp-fu did (10 x 0.03s ~ its 0.29s flash);
+;; - brackets close as they open (electric-pair; paredit does it in lisp);
+;; - a block whose start is off screen shows its opening line (show-paren is
+;;   on by default; this adds the context overlay).
 
 ;; ielm input is fontified in a hidden emacs-lisp-mode buffer (ielm-fontify-input-enable),
 ;; so the mode goes there; on ielm-mode itself it colors nothing.
 (use-package rainbow-delimiters
   :hook ((prog-mode ielm-indirect-setup) . rainbow-delimiters-mode))
+
+(electric-pair-mode 1)
+(setopt show-paren-context-when-offscreen 'overlay)
 
 (setopt pulse-iterations 10 pulse-delay 0.03)
 

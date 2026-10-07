@@ -100,7 +100,7 @@ inputs.emacs-camp = {
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.korean.enable = true;  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
-emacs-camp.extras = [ "10-prog" ];  # 코드 버퍼와 ielm에 무지개 괄호, eval 깜박임
+emacs-camp.extras = [ "10-prog" ];  # 무지개 괄호, eval 깜박임, 괄호 자동 닫기, 화면 밖 여는 괄호 표시
 ```
 
 `extras/*.el`은 모두 `~/.config/emacs/extras/`에 배포되지만, `ecamp-extras`에
