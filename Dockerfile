@@ -34,7 +34,8 @@ COPY --from=build --chown=user:user /home/user /home/user
 USER user
 WORKDIR /home/user
 ENV PATH=/home/user/.local/state/nix/profiles/home-manager/home-path/bin:$PATH \
-    TERM=xterm-256color LANG=C.UTF-8
+    TERM=xterm-256color LANG=en_US.UTF-8 \
+    LOCALE_ARCHIVE=/home/user/.local/state/nix/profiles/home-manager/home-path/lib/locale/locale-archive
 CMD ["emacs"]
 
 FROM scratch AS scratch
@@ -46,5 +47,6 @@ WORKDIR /home/user
 ENV PATH=/home/user/.local/state/nix/profiles/home-manager/home-path/bin \
     SSL_CERT_FILE=/home/user/.local/state/nix/profiles/home-manager/home-path/etc/ssl/certs/ca-bundle.crt \
     HOME=/home/user SHELL=/home/user/.local/state/nix/profiles/home-manager/home-path/bin/bash \
-    TERM=xterm-256color LANG=C.UTF-8
+    TERM=xterm-256color LANG=en_US.UTF-8 \
+    LOCALE_ARCHIVE=/home/user/.local/state/nix/profiles/home-manager/home-path/lib/locale/locale-archive
 CMD ["emacs"]

@@ -30,6 +30,7 @@
         # The image starts from scratch, so the shell and its tools come from here.
         home.packages = lib.mkForce (with pkgs; [
           config.basecamp.emacs.package gitMinimal bashInteractive coreutils less cacert
+          config.i18n.glibcLocales # home-path/lib/locale: LOCALE_ARCHIVE in the Dockerfile
         ]);
         # No systemd in a container; a bare name keeps systemd (~120 MB) out of the closure.
         systemd.user.systemctlPath = "systemctl";
