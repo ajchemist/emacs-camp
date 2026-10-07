@@ -206,7 +206,9 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
   `homeConfigurations.sandbox-<arch>-linux`(basecamp의 Emacs + 이 모듈)를
   빌드하고 Home Manager activation을 실행합니다. 링크, `extras-default.el`,
   컴파일, 패키지 sync가 모두 모듈 그대로입니다. 결과인 홈과 그 `/nix/store`
-  closure만 `scratch` 위에 담습니다. 배포판도 Nix도 없습니다(압축 약 170 MB).
+  closure만 Nix 없이 담아 태그 두 개로 냅니다. `:latest`는 `scratch` 위에
+  그것만(압축 약 170 MB), `:debian`은 apt와 `/bin/sh`가 필요할 때 쓰는 Debian
+  slim 기반(약 200 MB)입니다.
 - 샌드박스 경량화는 별도 레시피가 아니라 옵션으로 합니다.
   `basecamp.emacs.nativeComp = false`로 gcc와 libgccjit을, `systemctl`을 이름만
   두어 systemd를 빼고, git은 `gitMinimal`을 쓰며, extra는 하나도
