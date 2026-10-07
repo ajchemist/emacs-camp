@@ -231,7 +231,7 @@ need a free Killercoda login.
 ### Other playgrounds
 
 - **GitHub Codespaces**:
-  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp)
+  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
   `.devcontainer/devcontainer.json` runs the `:debian` image (`scratch` has no
   shell for a dev container) as `user`. Run `emacs` in the terminal. Needs a
   GitHub account; it uses the visitor's free Codespaces hours.
@@ -296,3 +296,7 @@ No account is needed, because initialize comes before authentication. The
 emacs-camp module does not depend on agent-camp; the flake input is only for
 CI. To get the adapters on your own machine, import agent-camp's module
 (answer yes to `<agent>-acp`), or install them however you like.
+
+## License
+
+GPL-3.0-or-later, like Emacs and the packages it builds on. See `LICENSE`.

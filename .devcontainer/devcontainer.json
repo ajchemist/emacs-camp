@@ -4,5 +4,21 @@
   "remoteUser": "user",
   "containerUser": "user",
   "updateRemoteUserUID": false,
-  "postAttachCommand": "echo 'Run emacs (C-x C-c quits).'"
+  "customizations": {
+    "codespaces": {
+      "openFiles": []
+    },
+    "vscode": {
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "emacs": { "path": "/home/user/.local/state/nix/profiles/home-manager/home-path/bin/emacs", "args": ["-nw"] },
+          "bash": { "path": "/bin/bash" }
+        },
+        "terminal.integrated.defaultProfile.linux": "emacs",
+        "terminal.integrated.sendKeybindingsToShell": true,
+        "workbench.startupEditor": "none"
+      }
+    }
+  },
+  "postAttachCommand": "echo 'emacs-camp: the terminal runs Emacs (C-x C-c quits); + > bash for a shell.'"
 }

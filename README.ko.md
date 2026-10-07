@@ -230,7 +230,7 @@ Killercoda 동기화를 멈추게 합니다.
 ### 다른 플레이그라운드
 
 - **GitHub Codespaces**:
-  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp)
+  [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ajchemist/emacs-camp?quickstart=1)
   `.devcontainer/devcontainer.json`이 `:debian` 이미지를 `user`로 실행합니다
   (`scratch`에는 dev container에 필요한 셸이 없습니다). 터미널에서 `emacs`를
   실행하면 됩니다. GitHub 계정이 필요하고, 방문자의 무료 Codespaces 시간을 씁니다.
@@ -291,3 +291,7 @@ agent-shell로 에이전트마다 자체 설정으로 시작하고, ACP initiali
 없습니다. emacs-camp 모듈은 agent-camp에 의존하지 않고, flake input은 CI에서만
 씁니다. 자기 머신에 어댑터를 설치하려면 agent-camp 모듈을 import해서
 `<agent>-acp`에 yes로 답하거나, 원하는 방법으로 직접 설치하세요.
+
+## 라이선스
+
+Emacs와 그 위의 패키지들처럼 GPL-3.0-or-later입니다. `LICENSE`를 보세요.
