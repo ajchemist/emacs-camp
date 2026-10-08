@@ -90,6 +90,72 @@ present, and it treats "not known to be defined" as an error.
 To upgrade, run `M-x package-upgrade-all`. Deleting a block does not uninstall
 its package; use `M-x package-delete` for that.
 
+#### What each package is for
+
+One `use-package` block in `init.el` each, unless an extra is named.
+
+- Completion in the minibuffer. These build on the built-in
+  `completing-read`, so every command that prompts gets them, with no
+  per-command integration.
+  - `vertico`: a vertical candidate list, in place of the `*Completions*`
+    buffer.
+  - `savehist` (built in): minibuffer history across sessions; vertico sorts
+    by it.
+  - `orderless`: space-separated terms match in any order, as regexps or
+    literals.
+  - `marginalia`: annotations next to candidates (docstrings, key bindings,
+    file sizes).
+  - `consult`: search and navigation commands (`consult-buffer`,
+    `consult-line`, `consult-ripgrep`, ...) with live preview, in place of
+    `switch-to-buffer`, `yank-pop`, `goto-line` and `imenu`.
+  - `embark`: actions on the current candidate or the thing at point (`C-.`),
+    like a context menu.
+  - `embark-consult`: makes embark's collect buffers preview consult results.
+- Completion in buffers.
+  - `corfu`: a popup for the standard `completion-at-point`, so every mode's
+    completion function (elisp, eglot, shells) shows up in it.
+  - `cape`: extra completion functions, dabbrev and file names, in every
+    buffer.
+- Files.
+  - `dirvish`: dired with previews, subtrees and a transient menu; it takes
+    over dired the first time dired loads.
+- Lisp editing.
+  - `paredit`: structural editing that keeps parentheses balanced.
+  - `eros`: elisp eval results inline at point instead of in the echo area.
+  - `rainbow-delimiters`: parentheses colored by depth; init.el installs it,
+    the `10-prog` extra turns it on.
+- Git.
+  - `magit`: the git interface.
+  - `forge`: GitHub and GitLab issues and pull requests inside magit.
+  - `diff-hl`: changed lines marked in the fringe of file and dired buffers.
+- Agents.
+  - `agent-shell`: ACP agents (Claude Code, Codex, Gemini, ...) in an Emacs
+    buffer.
+- Theme and platform.
+  - `catppuccin-theme`: the latte flavor.
+  - `exec-path-from-shell`: the login shell's `PATH` for an Emacs.app
+    started from the Dock or Finder.
+
+The `00-korean` extra uses only built-in features.
+
+#### Not used
+
+- helm, with helm-swoop, helm-ls-git and the helm extensions (helm-gtags,
+  helm-cider, helm-pass, ...): replaced by vertico, consult, orderless,
+  marginalia and embark. helm is a framework with its own commands and
+  sources; the replacements are small packages on top of `completing-read`,
+  so built-in commands get the same UI and each piece can be dropped alone.
+  `consult-line` covers helm-swoop, `project-find-file` and `consult-find`
+  cover helm-ls-git.
+- company: replaced by corfu and cape. company has its own backend API;
+  corfu shows the standard `completion-at-point` functions, which modes and
+  eglot already provide.
+- ido and flx-ido: vertico covers every `completing-read` prompt, not only
+  the commands ido handles, and orderless does the out-of-order and flex
+  matching.
+- auto-complete: the generation before company, and corfu covers it the same
+  way.
+
 ## The Home Manager module
 
 ```nix

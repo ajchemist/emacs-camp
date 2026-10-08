@@ -89,6 +89,68 @@ byte 컴파일과 native 컴파일을 하고, 모듈이 관리하는 심볼릭 �
 업그레이드는 `M-x package-upgrade-all`로 합니다. 블록을 지워도 패키지는
 삭제되지 않습니다. 삭제하려면 `M-x package-delete`를 쓰세요.
 
+#### 패키지마다 하는 일
+
+extra를 적은 것 말고는 모두 `init.el`의 `use-package` 블록 하나씩입니다.
+
+- 미니버퍼 완성. 모두 내장 `completing-read` 위에서 동작하므로, 무언가를
+  묻는 명령은 따로 연동하지 않아도 전부 이 UI를 씁니다.
+  - `vertico`: 후보를 세로 목록으로 보여 줍니다. `*Completions*` 버퍼를
+    대신합니다.
+  - `savehist`(내장): 미니버퍼 기록을 세션 사이에 남깁니다. vertico가 이
+    기록으로 정렬합니다.
+  - `orderless`: 공백으로 나눈 단어가 순서와 상관없이, 정규식이나 문자
+    그대로 맞춰집니다.
+  - `marginalia`: 후보 옆에 설명(docstring, 키 바인딩, 파일 크기)을 붙입니다.
+  - `consult`: 미리보기가 되는 검색·이동 명령(`consult-buffer`,
+    `consult-line`, `consult-ripgrep` 등). `switch-to-buffer`, `yank-pop`,
+    `goto-line`, `imenu`를 대신합니다.
+  - `embark`: 현재 후보나 커서 위치의 대상에 동작을 실행합니다(`C-.`).
+    컨텍스트 메뉴와 비슷합니다.
+  - `embark-consult`: embark의 collect 버퍼에서 consult 결과를 미리 봅니다.
+- 버퍼 안 완성.
+  - `corfu`: 표준 `completion-at-point`를 팝업으로 보여 줍니다. 모드마다의
+    완성 함수(elisp, eglot, 셸)가 그대로 여기에 나옵니다.
+  - `cape`: 모든 버퍼에 완성 함수를 더합니다(dabbrev, 파일 이름).
+- 파일.
+  - `dirvish`: 미리보기, 하위 트리, transient 메뉴가 있는 dired. dired가
+    처음 로드될 때 dired를 대신합니다.
+- Lisp 편집.
+  - `paredit`: 괄호 균형을 유지하는 구조 편집.
+  - `eros`: elisp eval 결과를 에코 영역 대신 커서 위치에 인라인으로
+    보여 줍니다.
+  - `rainbow-delimiters`: 괄호를 깊이마다 다른 색으로 칠합니다. 설치는
+    init.el이, 켜는 것은 `10-prog` extra가 합니다.
+- Git.
+  - `magit`: git 인터페이스.
+  - `forge`: magit 안에서 GitHub·GitLab 이슈와 풀 리퀘스트를 다룹니다.
+  - `diff-hl`: 파일 버퍼와 dired 버퍼의 fringe에 바뀐 줄을 표시합니다.
+- 에이전트.
+  - `agent-shell`: ACP 에이전트(Claude Code, Codex, Gemini 등)를 Emacs
+    버퍼에서 씁니다.
+- 테마와 플랫폼.
+  - `catppuccin-theme`: latte 테마.
+  - `exec-path-from-shell`: Dock이나 Finder에서 띄운 Emacs.app에 로그인
+    셸의 `PATH`를 줍니다.
+
+`00-korean` extra는 내장 기능만 씁니다.
+
+#### 쓰지 않는 것
+
+- helm과 helm-swoop, helm-ls-git, helm 확장들(helm-gtags, helm-cider,
+  helm-pass 등): vertico, consult, orderless, marginalia, embark가
+  대신합니다. helm은 자체 명령과 소스를 가진 프레임워크입니다. 대체하는
+  쪽은 `completing-read` 위의 작은 패키지들이어서, 내장 명령도 같은 UI를
+  쓰고 하나씩 따로 뺄 수 있습니다. helm-swoop은 `consult-line`이,
+  helm-ls-git은 `project-find-file`과 `consult-find`가 맡습니다.
+- company: corfu와 cape가 대신합니다. company는 자체 backend API를
+  씁니다. corfu는 모드와 eglot가 이미 제공하는 표준
+  `completion-at-point` 함수를 보여 줍니다.
+- ido와 flx-ido: vertico는 ido가 다루는 명령만이 아니라 모든
+  `completing-read` 프롬프트에 적용되고, 순서 무관 매칭과 flex 매칭은
+  orderless가 합니다.
+- auto-complete: company 이전 세대입니다. 마찬가지로 corfu가 대신합니다.
+
 ## Home Manager 모듈
 
 ```nix
