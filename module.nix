@@ -94,8 +94,9 @@ in
       done
     '';
 
-    # Each switch kicks off package work in the background: sync.el installs
-    # whatever :ensure blocks lack, compiles elpa/ and refreshes quickstart,
+    # Each switch kicks off package work in the background: sync.el brings
+    # what the :ensure blocks name to the pinned snapshot (docs/adr/0004),
+    # compiles elpa/ and refreshes quickstart,
     # followed by the macOS warmer. Never two at once; while sync.pid is alive
     # init.el leaves :ensure alone. The first switch (no elpa/ yet) waits for
     # it instead, so Emacs is complete as soon as the switch returns.

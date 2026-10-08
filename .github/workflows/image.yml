@@ -7,7 +7,7 @@ on:
     paths: [lisp/**, extras/**, sync.el, compile.el, module.nix, flake.nix, flake.lock, Dockerfile, .github/workflows/image.yml]
   workflow_dispatch:
   schedule:
-    - cron: "0 18 * * *" # nightly (03:00 KST) from main HEAD, so MELPA packages stay fresh
+    - cron: "0 18 * * *" # nightly (03:00 KST) from main HEAD: GNU/NonGNU updates (MELPA moves with the pinned snapshot)
 
 # A newer push supersedes a running build, so latest is never overwritten by an older commit.
 concurrency:

@@ -50,9 +50,9 @@ your flake     your own files through emacs-camp.userFiles
 - **early-init.el** drops the tool bar and scroll bar (on macOS the system
   menu bar stays), skips the startup screen, turns GC off for init and sets
   100MB afterwards, and enables `package-quickstart`.
-- **init.el** sets up package.el with MELPA (priority melpa > melpa-stable >
-  nongnu > gnu, native-compiled when installed), `use-package-always-ensure t`
-  and `use-package-always-defer t`. It then configures:
+- **init.el** sets up package.el with MELPA from a pinned snapshot (priority
+  melpa > nongnu > gnu, native-compiled when installed),
+  `use-package-always-ensure t` and `use-package-always-defer t`. It then configures:
   - the catppuccin latte theme;
   - Cmd as Meta and Option as Super on macOS, and exec-path-from-shell for an
     Emacs.app that was not launched from a terminal;
@@ -67,7 +67,9 @@ your flake     your own files through emacs-camp.userFiles
   `user/*.el` and `local.el`, in that order.
 
 You can skip Nix and copy `lisp/*.el` into `~/.config/emacs/`. Packages then
-install on the first launch instead of at deploy time. To compile the files
+install on the first launch instead of at deploy time. After copying in a
+newer `init.el` with another snapshot, run `emacs --batch -l sync.el` from a
+checkout to bring `elpa/` to it. To compile the files
 you put in `user/` yourself, run `bin/emacs-camp-compile-user`. It byte- and
 native-compiles them in place and skips the symlinks that the module manages.
 
@@ -87,8 +89,30 @@ If a block's `:config` calls a function from its package, add `:functions
 name` (or `:commands`). The store build compiles init.el with no packages
 present, and it treats "not known to be defined" as an error.
 
-To upgrade, run `M-x package-upgrade-all`. Deleting a block does not uninstall
-its package; use `M-x package-delete` for that.
+Deleting a block does not uninstall its package; use `M-x package-delete`
+for that.
+
+#### Versions: one pinned snapshot
+
+MELPA is read from one commit of
+[d12frosted/elpa-mirror](https://github.com/d12frosted/elpa-mirror), a dated
+mirror of the package archives. That commit, `ecamp-elpa-snapshot` in
+`init.el`, is the package lock: every host gets the same MELPA versions, and
+they change only through a commit here (docs/adr/0004-package-snapshot-pin.md).
+
+- To upgrade, set `ecamp-elpa-snapshot` to a newer commit of the mirror and
+  commit that one line. The next switch's package sync refetches the indexes
+  and reinstalls every package whose version differs from the snapshot's.
+  Going back to an older commit downgrades the same way.
+- `M-x package-upgrade-all` still works, but it moves MELPA packages only up
+  to the pinned snapshot, never past it, and never downgrades.
+- GNU ELPA and NonGNU ELPA come from their own servers, unpinned, at the
+  version current when the indexes were last fetched. The mirror's GNU
+  signatures are stale, and signature checking stays on. Today only
+  dependencies come from there.
+- melpa-stable is gone: the mirror's copy of it is the same file as MELPA's.
+- The mirror is read from raw.githubusercontent.com; the package sync falls
+  back to jsDelivr if that fails.
 
 #### What each package is for
 
@@ -189,7 +213,7 @@ The module depends on nothing from basecamp beyond its contract
 | byte-compile `lisp/` and `userFiles` | store build (warnings are errors) | switch stops before activating |
 | link `.el` + `.elc` into `~/.config/emacs/` | Home Manager | n/a |
 | native-compile those files (+ warm, macOS) | host, `emacsCampNativeCompile` | warning; Emacs JITs instead |
-| install missing packages, compile `elpa/`, refresh quickstart, warm `.eln` (macOS) | host, background; first switch waits (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
+| bring packages to the pinned snapshot (install, upgrade or downgrade), compile `elpa/`, refresh quickstart, warm `.eln` (macOS) | host, background; first switch waits (`emacsCampPackageSync`) | log in `~/.cache/emacs-camp/sync.log` |
 
 The store can't provide `.eln` files. Each file's name comes from the path
 Emacs reads the source from, and that path is `~/.config/emacs/...`.
@@ -209,7 +233,7 @@ of them at startup.
 
 The package sync native-compiles `elpa/` on all cores. Emacs uses half by
 default, which is a single job on a 3-core machine. The sync logs the seconds
-spent in each phase (`install`, `native-compile`, `warmed`). It then deletes
+spent in each phase (`install`, `converge`, `native-compile`, `warmed`). It then deletes
 the `eln-cache/` subdirectories of other Emacs builds. Each build adds one, and
 Emacs reads only the running build's. If an older build comes back, it
 re-JITs.
@@ -260,7 +284,7 @@ and no `Applications/`):
 │   └── agent-shell-<path>-<content>.eln   compiled by the package sync
 ├── elpa/
 │   ├── agent-shell-<version>/ …           installed by the package sync
-│   └── archives/                          MELPA/ELPA indexes
+│   └── archives/                          MELPA/ELPA indexes; ecamp-snapshot names the commit they are for
 ├── package-quickstart.el(c)               every package's autoloads, one file
 ├── custom.el                              written by Custom
 └── local.el                               yours, optional, loaded last
@@ -309,7 +333,8 @@ would load all packages at startup.
 - GitHub Actions (`.github/workflows/image.yml`) builds both tags from main for
   amd64 and arm64, each on a native runner, and joins them per tag.
   It runs on every push that touches `lisp/`, `extras/`, `sync.el`,
-  `compile.el`, `module.nix`, `flake.*` or `Dockerfile`, and nightly at 18:00 UTC to pick up MELPA
+  `compile.el`, `module.nix`, `flake.*` or `Dockerfile`, and nightly at 18:00 UTC. MELPA packages move only
+  with the pinned snapshot, so the nightly build picks up GNU and NonGNU ELPA
   updates. A newer build cancels a running one.
 
 ## Checks
@@ -348,9 +373,10 @@ verifies that:
   startup, then each package with when it loads, its first-load time and how
   many features it pulls in.
 
-The runtime job caches `elpa/` keyed on OS, package list and ISO week. The
-weekly scheduled run starts from an empty cache, so it still catches MELPA
-drift.
+The runtime job caches `elpa/` keyed on OS, package list (which includes the
+pinned snapshot) and ISO week. The weekly scheduled run starts from an empty
+cache, so it still catches GNU/NonGNU drift and a mirror that stopped serving
+the snapshot.
 
 On Windows runners, the `gpg` on PATH is the MSYS build that ships with Git
 for Windows. It reports `bad-signature` for every GNU/NonGNU ELPA archive, and

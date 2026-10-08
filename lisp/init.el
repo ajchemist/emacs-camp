@@ -7,16 +7,29 @@
 
 ;;; Packages
 
-;; Packages come from package.el and MELPA on purpose, not from Nix: the ones
-;; worth tracking change every day, and Nix's MELPA snapshot lags by weeks.
+;; Packages come from package.el, not from Nix, on purpose: Nix-built packages
+;; would replace elpa/, the deploy-time sync and package-upgrade-all, and
+;; nixpkgs' MELPA set lags by weeks.
+;; MELPA is read from one commit of a dated mirror of it, so that commit is
+;; the package lock (docs/adr/0004-package-snapshot-pin.md). To move every
+;; host to newer packages, change it to a newer commit of
+;; https://github.com/d12frosted/elpa-mirror; sync.el converges elpa/ on it.
+(defconst ecamp-elpa-snapshot "6c1141b68c4e9cd84cfbcfcc8d740e1033e401a2")
+;; The same snapshot from two hosts; sync.el falls back to the second.
+;; jsDelivr comes second: for a repository this size it refuses some files
+;; (403, "Package size exceeded the configured limit of 50 MB").
+(defconst ecamp-elpa-mirrors
+  '("https://raw.githubusercontent.com/d12frosted/elpa-mirror/%s/melpa/"
+    "https://cdn.jsdelivr.net/gh/d12frosted/elpa-mirror@%s/melpa/"))
+;; GNU and NonGNU stay on their own servers, unpinned: the mirror keeps stale
+;; .sig files for them, which fail signature checks.
 (require 'package)
 (setq package-archives
-      '(("melpa" . "https://melpa.org/packages/")
-        ("melpa-stable" . "https://stable.melpa.org/packages/")
+      `(("melpa" . ,(format (car ecamp-elpa-mirrors) ecamp-elpa-snapshot))
         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
         ("gnu" . "https://elpa.gnu.org/packages/"))
       package-archive-priorities
-      '(("melpa" . 4) ("melpa-stable" . 3) ("nongnu" . 2) ("gnu" . 1))
+      '(("melpa" . 3) ("nongnu" . 2) ("gnu" . 1))
       ;; compile to native code when installing instead of on first load
       package-native-compile t)
 

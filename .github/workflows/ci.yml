@@ -16,7 +16,7 @@ on:
     paths: *code
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * 1" # once a week, since MELPA keeps changing
+    - cron: "0 3 * * 1" # once a week: GNU/NonGNU are unpinned, and the mirror must still serve the snapshot
 
 jobs:
   # Static checks: all flake outputs evaluate, lisp/ byte-compiles with
@@ -82,8 +82,9 @@ jobs:
           echo "D=$d" >> "$GITHUB_ENV"
           echo "WEEK=$(date -u +%G-%V)" >> "$GITHUB_ENV"
           emacs --version | head -1
-      # Cache elpa/ by OS, package list and ISO week so pushes and PRs avoid
-      # fetching MELPA; the weekly cron starts clean, so drift still surfaces.
+      # Cache elpa/ by OS, package list (init.el holds the pinned snapshot) and
+      # ISO week so pushes and PRs avoid refetching; the weekly cron starts
+      # clean, so GNU/NonGNU drift and a vanished mirror still surface.
       - name: Cache elpa/
         if: github.event_name != 'schedule'
         uses: actions/cache@v6

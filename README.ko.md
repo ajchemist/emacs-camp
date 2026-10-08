@@ -48,7 +48,7 @@ your flake     emacs-camp.userFiles로 넣는 자신의 파일
 - **early-init.el**은 tool bar와 scroll bar를 없애고(macOS의 시스템 메뉴바는
   그대로 둡니다), 시작 화면을 건너뜁니다. init 동안 GC를 껐다가 끝나면
   100MB로 맞추고, `package-quickstart`를 켭니다.
-- **init.el**은 package.el과 MELPA(우선순위 melpa > melpa-stable > nongnu >
+- **init.el**은 package.el과 고정된 스냅샷의 MELPA(우선순위 melpa > nongnu >
   gnu, 설치할 때 native 컴파일), `use-package-always-ensure t`,
   `use-package-always-defer t`를 설정합니다. 그다음 아래를 구성합니다.
   - catppuccin latte 테마
@@ -65,7 +65,9 @@ your flake     emacs-camp.userFiles로 넣는 자신의 파일
   `local.el`을 이 순서로 로드합니다.
 
 Nix 없이 `lisp/*.el`을 `~/.config/emacs/`에 복사해서 써도 됩니다. 그러면
-패키지는 배포할 때가 아니라 처음 실행할 때 설치됩니다. `user/`에 직접 넣은
+패키지는 배포할 때가 아니라 처음 실행할 때 설치됩니다. 다른 스냅샷을 가리키는
+새 `init.el`을 복사해 넣었다면, 체크아웃에서 `emacs --batch -l sync.el`을 실행해
+`elpa/`를 그 스냅샷에 맞추세요. `user/`에 직접 넣은
 파일을 컴파일하려면 `bin/emacs-camp-compile-user`를 실행하세요. 그 자리에서
 byte 컴파일과 native 컴파일을 하고, 모듈이 관리하는 심볼릭 링크는
 건너뜁니다.
@@ -86,8 +88,29 @@ byte 컴파일과 native 컴파일을 하고, 모듈이 관리하는 심볼릭 �
 `:commands`)을 붙이세요. store 빌드는 패키지가 하나도 없는 상태로 init.el을
 컴파일하고, "not known to be defined"를 에러로 처리합니다.
 
-업그레이드는 `M-x package-upgrade-all`로 합니다. 블록을 지워도 패키지는
-삭제되지 않습니다. 삭제하려면 `M-x package-delete`를 쓰세요.
+블록을 지워도 패키지는 삭제되지 않습니다. 삭제하려면 `M-x package-delete`를
+쓰세요.
+
+#### 버전: 고정된 스냅샷 하나
+
+MELPA는 패키지 아카이브의 날짜별 미러인
+[d12frosted/elpa-mirror](https://github.com/d12frosted/elpa-mirror)의 커밋
+하나에서 받습니다. 그 커밋(`init.el`의 `ecamp-elpa-snapshot`)이 패키지
+잠금입니다. 모든 호스트가 같은 MELPA 버전을 받고, 버전은 이 저장소의 커밋으로만
+바뀝니다(docs/adr/0004-package-snapshot-pin.md).
+
+- 업그레이드하려면 `ecamp-elpa-snapshot`을 미러의 더 새 커밋으로 바꾸고 그 한
+  줄을 커밋합니다. 다음 switch의 패키지 sync가 목록을 다시 받고, 스냅샷과 버전이
+  다른 패키지를 모두 다시 설치합니다. 예전 커밋으로 돌리면 같은 방식으로
+  다운그레이드됩니다.
+- `M-x package-upgrade-all`도 쓸 수 있지만, MELPA 패키지는 고정된 스냅샷까지만
+  올리고 그 너머로는 올리지 않으며, 내리지도 않습니다.
+- GNU ELPA와 NonGNU ELPA는 원래 서버에서 고정 없이 받습니다. 버전은 목록을
+  마지막으로 받은 때의 것입니다. 미러의 GNU 서명이 낡았고, 서명 검사는 켜 둡니다.
+  지금은 의존성만 거기서 옵니다.
+- melpa-stable은 뺐습니다. 미러에 있는 melpa-stable은 MELPA와 같은 파일입니다.
+- 미러는 raw.githubusercontent.com에서 받고, 실패하면 패키지 sync가 jsDelivr로
+  넘어갑니다.
 
 #### 패키지마다 하는 일
 
@@ -183,7 +206,7 @@ emacs-camp.extras = [
 | `lisp/`와 `userFiles` byte-compile | store 빌드 (경고도 에러) | 활성화 전에 switch가 멈춤 |
 | `.el` + `.elc`를 `~/.config/emacs/`에 링크 | Home Manager | 해당 없음 |
 | 그 파일들 native-compile (+ warm, macOS) | 호스트, `emacsCampNativeCompile` | 경고만 남고 Emacs가 대신 JIT |
-| 빠진 패키지 설치, `elpa/` 컴파일, quickstart 갱신, `.eln` warm (macOS) | 호스트, 백그라운드. 첫 switch는 기다림 (`emacsCampPackageSync`) | `~/.cache/emacs-camp/sync.log`에 기록 |
+| 패키지를 고정된 스냅샷에 맞춤(설치, 업그레이드, 다운그레이드), `elpa/` 컴파일, quickstart 갱신, `.eln` warm (macOS) | 호스트, 백그라운드. 첫 switch는 기다림 (`emacsCampPackageSync`) | `~/.cache/emacs-camp/sync.log`에 기록 |
 
 store는 `.eln` 파일을 제공할 수 없습니다. 파일 이름이 Emacs가 소스를 읽는
 경로에서 정해지는데, 그 경로가 `~/.config/emacs/...`이기 때문입니다.
@@ -202,7 +225,7 @@ switch 때의 native 컴파일도 store byte 컴파일처럼 `:ensure`를 끄고
 
 패키지 sync는 `elpa/`를 모든 코어로 native 컴파일합니다. Emacs 기본값은 코어
 절반이라, 3코어 머신에서는 작업이 하나뿐입니다. sync는 단계(`install`,
-`native-compile`, `warmed`)마다 걸린 초를 로그에 남깁니다. 그다음 다른 Emacs
+`converge`, `native-compile`, `warmed`)마다 걸린 초를 로그에 남깁니다. 그다음 다른 Emacs
 빌드의 `eln-cache/` 하위 디렉터리를 지웁니다. 하위 디렉터리는 빌드마다 하나씩
 생기고, Emacs는 실행 중인 빌드의 것만 읽습니다. 예전 빌드로 돌아가면 다시
 JIT합니다.
@@ -253,7 +276,7 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준. Linux에는 `
 │   └── agent-shell-<path>-<content>.eln   패키지 sync가 컴파일
 ├── elpa/
 │   ├── agent-shell-<version>/ …           패키지 sync가 설치
-│   └── archives/                          MELPA/ELPA 목록
+│   └── archives/                          MELPA/ELPA 목록. ecamp-snapshot은 그 목록의 커밋
 ├── package-quickstart.el(c)               패키지 autoload 전부를 한 파일에
 ├── custom.el                              Custom이 기록
 └── local.el                               사용자 파일, 선택, 마지막에 로드
@@ -301,8 +324,9 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
   켜지 않습니다(`M-x customize-variable RET ecamp-extras`로 켭니다).
 - GitHub Actions(`.github/workflows/image.yml`)가 main에서 두 태그를 amd64와
   arm64로 각각 네이티브 러너에서 빌드해 태그마다 하나로 묶습니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `module.nix`, `flake.*`, `Dockerfile`이
-  바뀌는 push마다 돌고, MELPA 갱신을 받으려고 매일 18:00 UTC(03:00 KST)에도
-  돕니다. 새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
+  바뀌는 push마다 돌고, 매일 18:00 UTC(03:00 KST)에도 돕니다. MELPA
+  패키지는 고정된 스냅샷과 함께만 움직이므로, 매일 빌드는 GNU·NonGNU ELPA 갱신을
+  받습니다. 새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
 
 ## 검사
 
@@ -337,8 +361,9 @@ Nix가 돌지 않는 Windows는 같은 버전의 GNU 빌드를 설치하고, 그
   남습니다. init 시간, 시작 시 feature 수와 GC 횟수, 그리고 패키지별로 로드
   시점, 첫 로드 시간, 함께 끌어오는 feature 수입니다.
 
-런타임 작업은 `elpa/`를 OS, 패키지 목록, ISO 주차를 키로 캐시합니다. 매주
-정기 실행은 빈 캐시에서 시작하므로 MELPA 쪽 변화도 잡아냅니다.
+런타임 작업은 `elpa/`를 OS, 패키지 목록(고정된 스냅샷 포함), ISO 주차를 키로
+캐시합니다. 매주 정기 실행은 빈 캐시에서 시작하므로 GNU·NonGNU 쪽 변화와,
+미러가 스냅샷을 더 이상 내주지 않는 경우도 잡아냅니다.
 
 Windows 러너에서 PATH에 잡히는 `gpg`는 Git for Windows에 딸린 MSYS 빌드입니다.
 이 gpg는 GNU/NonGNU ELPA 아카이브마다 `bad-signature`를 보고하고, `compat`이
