@@ -1,0 +1,48 @@
+name: Bump
+
+# An approved update ticket becomes a bump PR (docs/adr/0004): ci/bump.py moves
+# ecamp-elpa-snapshot to the mirror's HEAD. Runs when the ticket is labelled
+# `approved`, and is dispatched by the weekly briefing when the mirror moves
+# under an approved ticket. Nothing auto-merges.
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: write
+  actions: write  # GITHUB_TOKEN pushes start no workflows; ci.yml is dispatched instead
+
+concurrency: bump-elpa-mirror
+
+jobs:
+  bump:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.label.name == 'approved' && contains(github.event.issue.labels.*.name, 'update:elpa-mirror'))
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Bump, push, open or update the PR
+        run: |
+          version=$(python3 ci/bump.py)
+          if [ -z "$version" ]; then echo "elpa-mirror is already current"; exit 0; fi
+          issue=$(gh issue list --state open --label update --label update:elpa-mirror --json number --jq '.[0].number')
+          branch=update/elpa-mirror
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git commit -qam "elpa-mirror: $version"
+          git push -f origin "$branch"
+          title="Bump elpa-mirror to $version"
+          body="${issue:+Closes #$issue}"$'\n\n'"\`ecamp-elpa-snapshot\` moved by \`ci/bump.py\`."
+          pr=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+          if [ -n "$pr" ]; then gh pr edit "$pr" --title "$title" --body "$body"
+          else gh pr create --head "$branch" --title "$title" --body "$body"; fi
+          # The result lands on the head commit and shows on the PR.
+          gh workflow run ci.yml --ref "$branch"

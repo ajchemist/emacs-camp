@@ -1,0 +1,18 @@
+name: Triage
+
+# No code without an approved issue, and no AI co-author trailers (docs/adr/0005).
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  gate:
+    if: github.event_name == 'issues' || github.event.action != 'synchronize'
+    permissions: { issues: write, pull-requests: write }
+    uses: ajchemist/.github/.github/workflows/approved-gate.yml@v1
+  ai-coauthors:
+    if: github.event_name == 'pull_request_target'
+    permissions: { pull-requests: write }
+    uses: ajchemist/.github/.github/workflows/ai-coauthors.yml@v1

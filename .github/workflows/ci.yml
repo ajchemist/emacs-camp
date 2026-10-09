@@ -37,7 +37,7 @@ jobs:
         run: echo "version=$(nix eval --raw .#packages.x86_64-linux.emacs.version)" >> "$GITHUB_OUTPUT"
       - name: Helpers parse
         run: |
-          python3 -m py_compile ci/mock-acp-agent.py ci/test_activation.py
+          python3 -m py_compile ci/mock-acp-agent.py ci/test_activation.py ci/updates.py ci/bump.py
           bash -n ci/e2e-deploy.sh ci/eln-vetting.sh
 
   # The module-free path on every OS: lisp/ copied in, the package sync, a

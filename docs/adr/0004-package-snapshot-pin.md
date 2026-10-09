@@ -70,12 +70,21 @@ tarball을 지우므로, sync 도중 404가 나는 경우를 위해 index를 다
   (그 이상은 없다), gnu·nongnu 패키지는 최신으로 올린다. 다운그레이드는
   하지 않는다. melpa를 올리는 길은 커밋을 올리는 것이다.
 - 패키지 하나만 올릴 수는 없다. 커밋을 옮기면 melpa 전체가 함께 움직인다.
-- 지금은 사람이 손으로 올린다. 자동화는 agent-camp의
+- 올리는 일은 agent-camp의
   [ADR 0001](https://github.com/ajchemist/agent-camp/blob/main/docs/adr/0001-update-tickets-and-bump-prs.md)
-  방식을 따라 만든다. 매주 도는 briefing이 미러가 움직였으면 `update` 티켓
-  하나를 열거나 고쳐 쓰고, 그 티켓에 `approved` 라벨을 달면 bump workflow가
-  `ecamp-elpa-snapshot` 한 줄을 바꾸는 PR을 열며, CI가 그 PR을 검증한다.
-  자동 병합은 없다. 그래서 커밋은 `init.el`의 `defconst` 한 곳에만 둔다.
+  방식으로 자동화했다. 매주 월요일 `updates.yml`(`ci/updates.py`)이 고정한
+  커밋과 미러 HEAD를 비교해 run summary에 적는다. 고정한 커밋이 HEAD보다
+  7일 이상 낡았으면 라벨 `update` + `update:elpa-mirror`로 찾는 티켓 하나를
+  `needs-triage`로 열거나 고쳐 쓰고, 7일 안이면 열린 티켓을 닫는다(미러는
+  몇 시간마다 커밋하므로 커밋마다 티켓을 건드리지 않는다). 그 티켓에
+  `approved` 라벨을 달면 `bump.yml`(`ci/bump.py`)이 그때의 미러 HEAD가
+  raw에서 `melpa/archive-contents`를 내주는지 확인하고 `defconst` 한 줄을
+  바꿔 `update/elpa-mirror` 브랜치에 올린 뒤 `Closes #<티켓>` PR을 열거나
+  고친다. `GITHUB_TOKEN`의 push는 workflow를 시작하지 않으므로 `ci.yml`을
+  그 브랜치로 dispatch하고, 그 결과가 PR에 붙는다. 승인된 티켓 아래에서
+  미러가 다시 움직이면 briefing이 `bump.yml`을 dispatch한다. 자동 병합은
+  없다. 그래서 커밋은 `init.el`의 `defconst` 한 곳에만 둔다. 손으로 올리는
+  길도 그대로다.
 - 미러에 기대는 위험이 생긴다. 한 사람이 운영하는 약 18 GiB 저장소이고,
   README는 "공식 저장소가 잠시 내려갔을 때만" 쓰라고 한다.
 

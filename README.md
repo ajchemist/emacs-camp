@@ -104,6 +104,10 @@ they change only through a commit here (docs/adr/0004-package-snapshot-pin.md).
   commit that one line. The next switch's package sync refetches the indexes
   and reinstalls every package whose version differs from the snapshot's.
   Going back to an older commit downgrades the same way.
+- Bumping is automated: a weekly briefing (`updates.yml`) keeps one `update`
+  ticket open while the pin is 7 or more days behind the mirror. Labelling it
+  `approved` makes `bump.yml` open a PR that moves the pin to the mirror's
+  latest commit and runs CI on it; merging it is the bump.
 - `M-x package-upgrade-all` still works, but it moves MELPA packages only up
   to the pinned snapshot, never past it, and never downgrades.
 - GNU ELPA and NonGNU ELPA come from their own servers, unpinned, at the

@@ -1,0 +1,23 @@
+name: Update briefing
+
+on:
+  schedule:
+    - cron: "0 0 * * 1" # weekly, Monday, before CI's weekly run
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write   # the update ticket
+  actions: write  # dispatch bump.yml when the mirror moves under an approved ticket
+
+jobs:
+  # The pinned elpa-mirror commit against the mirror's HEAD, in the run summary,
+  # and the one update ticket kept in step (docs/adr/0004).
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Briefing
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ci/updates.py --tickets | tee -a "$GITHUB_STEP_SUMMARY"
