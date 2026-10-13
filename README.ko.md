@@ -135,6 +135,8 @@ extra를 적은 것 말고는 모두 `init.el`의 `use-package` 블록 하나씩
   - `embark`: 현재 후보나 커서 위치의 대상에 동작을 실행합니다(`C-.`).
     컨텍스트 메뉴와 비슷합니다.
   - `embark-consult`: embark의 collect 버퍼에서 consult 결과를 미리 봅니다.
+- 버퍼 관리: `C-x C-b`는 내장 `ibuffer`를, `C-x b`는 검색·전환용
+  `consult-buffer`를 사용합니다.
 - 버퍼 안 완성.
   - `corfu`: 표준 `completion-at-point`를 팝업으로 보여 줍니다. 모드마다의
     완성 함수(elisp, eglot, 셸)가 그대로 여기에 나옵니다.

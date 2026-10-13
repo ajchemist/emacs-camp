@@ -106,6 +106,10 @@
   :functions exec-path-from-shell-initialize
   :config (exec-path-from-shell-initialize))
 
+(use-package ibuffer
+  :ensure nil
+  :bind ("C-x C-b" . ibuffer))
+
 ;;; Completion
 
 ;; In the minibuffer, vertico lists what the built-in completing-read offers,

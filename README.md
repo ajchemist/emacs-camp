@@ -139,6 +139,8 @@ One `use-package` block in `init.el` each, unless an extra is named.
   - `embark`: actions on the current candidate or the thing at point (`C-.`),
     like a context menu.
   - `embark-consult`: makes embark's collect buffers preview consult results.
+- Buffer management: built-in `ibuffer` on `C-x C-b`; `C-x b` uses
+  `consult-buffer` for searching and switching.
 - Completion in buffers.
   - `corfu`: a popup for the standard `completion-at-point`, so every mode's
     completion function (elisp, eglot, shells) shows up in it.
