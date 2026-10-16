@@ -1,13 +1,10 @@
-# Home Manager module for emacs-camp: puts lisp/ on top of nix-basecamp's Emacs.
-# It relies on nothing but basecamp's contract (basecamp.emacs.package,
-# .warmProgram); the downstream sets basecamp.emacs.enable/gui where it installs.
 { lib, config, pkgs, ... }:
 
 let
   cfg = config.emacs-camp;
-  emacs = config.basecamp.emacs.package;
+  emacs = cfg.package;
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-  elnWarm = "${config.basecamp.emacs.warmProgram}/bin/eln-warm";
+  elnWarm = "${cfg.warmProgram}/bin/eln-warm";
   userNames = map baseNameOf cfg.userFiles;
   extraNames = lib.attrNames (lib.filterAttrs (n: _: lib.hasSuffix ".el" n) (builtins.readDir ./extras));
   extrasDefault = cfg.extras;
@@ -44,15 +41,11 @@ let
 in
 {
   imports = [
+    ./install.nix
     (lib.mkRemovedOptionModule [ "emacs-camp" "korean" "enable" ] "Use emacs-camp.extras = [ \"00-korean\" ] instead (docs/adr/0003-extras-single-option.md).")
   ];
 
   options.emacs-camp = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = config.basecamp.emacs.enable;
-      description = "Deploy emacs-camp into ~/.config/emacs (defaults to basecamp.emacs.enable).";
-    };
     userFiles = lib.mkOption {
       type = lib.types.listOf lib.types.path;
       default = [ ];
@@ -67,11 +60,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [{
-      assertion = config.basecamp.emacs.enable;
-      message = "emacs-camp needs nix-basecamp's Emacs: set basecamp.emacs.enable where the install happens.";
-    }];
-
     # Only individual links; ~/.config/emacs remains a normal writable directory.
     xdg.configFile = lib.listToAttrs (map (f: lib.nameValuePair "emacs/${f}" { source = "${compiled}/${f}"; })
       (lib.concatMap (n: [ "${n}.el" "${n}.elc" ]) compiledNames ++ map (n: "${n}.el") sourceOnly))

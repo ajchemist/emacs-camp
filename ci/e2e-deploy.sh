@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Actually install emacs-camp on the CI runner the same way a downstream would,
-# using nix-basecamp's builder plus this module for the runner's user.
-#   Linux: basecamp.lib.mkHome (emacs = nox) -> activate Home Manager.
-#   macOS: basecamp.lib.mkDarwin (emacs = gui) -> activate nix-darwin (sudo).
+# using nix-basecamp's builder plus this flake's modules for the runner's user.
+#   Linux: basecamp.lib.mkHome + homeModules.default -> activate Home Manager.
+#   macOS: basecamp.lib.mkDarwin + darwinModules.default (Emacs.app, warm-up)
+#          and homeModules.default -> activate nix-darwin (sudo).
 # ECAMP_WITH_AGENTS=1 adds agent-camp with its CI set (claude, codex, pi,
 # goose and their ACP adapters) and exports AGENT_CAMP_PATH.
 # After that, wait for the background package sync and list the result.
@@ -21,8 +22,8 @@ case "$(uname -s)" in
     out="$(nix build --impure --no-link --print-out-paths --expr "
       let f = builtins.getFlake \"path:$flake\"; in
       (f.inputs.basecamp.lib.mkHome {
-        user = \"$user\"; homeDirectory = \"$HOME\"; emacs = \"nox\";
-        modules = [ $mods ];
+        user = \"$user\"; homeDirectory = \"$HOME\";
+        modules = [ { emacs-camp.enable = true; } $mods ];
       }).activationPackage")"
     "$out/activate"
     emacs="$HOME/.nix-profile/bin/emacs"
@@ -31,8 +32,11 @@ case "$(uname -s)" in
     top="$(nix build --impure --no-link --print-out-paths --expr "
       let f = builtins.getFlake \"path:$flake\"; in
       (f.inputs.basecamp.lib.mkDarwin {
-        user = \"$user\"; emacs = \"gui\";
-        modules = [ { home-manager.sharedModules = [ $mods ]; } ];
+        user = \"$user\";
+        modules = [ f.darwinModules.default {
+          emacs-camp.enable = true;
+          home-manager.sharedModules = [ $mods ];
+        } ];
       }).system")"
     for f in /etc/bashrc /etc/zshrc /etc/zshenv; do
       if [ -f "$f" ] && [ ! -L "$f" ]; then sudo mv "$f" "$f.before-nix-darwin"; fi

@@ -5,12 +5,11 @@
 
 English · [한국어](README.ko.md)
 
-emacs-camp is an Emacs runtime with a small init and a full set of packages.
-`use-package` handles each package. It installs the package when it is
-missing, leaves it unloaded until something calls it, and configures it when
-it loads. Emacs itself comes from
-[nix-basecamp](https://github.com/ajchemist/nix-basecamp), and this repository
-covers only what runs on top of it.
+emacs-camp is an Emacs with a small init and a full set of packages. The
+flake builds Emacs, installs it and deploys the runtime (`lisp/`), which
+also runs without Nix. `use-package` handles each package. It installs the
+package when it is missing, leaves it unloaded until something calls it, and
+configures it when it loads.
 
 ## Playgrounds
 
@@ -38,12 +37,6 @@ Where each one is defined:
 - iximiuz Labs: `playgrounds/iximiuz/manifest.yaml`. After editing it, run
   `labctl playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`.
 - All of them run the image from [Demo image](#demo-image).
-
-```
-nix-basecamp   Emacs binary, GUI/nox, Emacs.app, store .eln warm-up
-emacs-camp     lisp/ runtime + a Home Manager module that deploys it
-your flake     your own files through emacs-camp.userFiles
-```
 
 ## The runtime (`lisp/`, no Nix needed)
 
@@ -193,14 +186,30 @@ special handling of mouse clicks within those margins.
 - auto-complete: the generation before company, and corfu covers it the same
   way.
 
-## The Home Manager module
+## Installing with Nix
+
+```
+nix-basecamp   the system: nixpkgs, the nix-darwin and Home Manager builders
+emacs-camp     Emacs (build, install, Emacs.app, .eln warm-up) + the lisp/ runtime
+your flake     your own files through emacs-camp.userFiles
+```
+
+On macOS, nix-darwin installs Emacs as a system package and copies Emacs.app
+into `/Applications/Nix Apps`, moving any other `Emacs.app` aside. On Linux,
+Home Manager installs it. Either way the Home Manager module deploys the
+runtime, compiled with that same Emacs. [docs/nix.md](docs/nix.md) has a
+complete flake, every option and the build outputs, and
+[docs/source-patches.md](docs/source-patches.md) covers patching Emacs itself.
 
 ```nix
 inputs.emacs-camp = {
   url = "github:ajchemist/emacs-camp";
   inputs.basecamp.follows = "basecamp";
 };
-# in a home built with basecamp.lib.mkDarwin / mkHome, basecamp.emacs.enable = true:
+# macOS, in the nix-darwin modules (on Linux, set these in Home Manager):
+imports = [ emacs-camp.darwinModules.default ];
+emacs-camp = { enable = true; gui = true; };
+# Home Manager:
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.extras = [
@@ -219,8 +228,8 @@ ship as `.el` and are native-compiled on first load once turned on.
 An extra may bring its own packages with `use-package`; only enabled extras
 install them (docs/adr/0002-extras-opt-in-cost.md).
 
-The module depends on nothing from basecamp beyond its contract
-(`basecamp.emacs.package`, `.warmProgram`). Every switch does the following:
+The module compiles with the Emacs it installs (`emacs-camp.package`).
+Every switch does the following:
 
 | Step | Where | On failure |
 |---|---|---|
@@ -262,10 +271,13 @@ link and leaves its target alone.
 The first time a process `dlopen`s a Mach-O file, macOS checks it. That takes
 0.3 to 0.4 s per file, one file at a time, and macOS caches the result per
 file. A native-compiled Lisp file (`.eln`) is a Mach-O dylib, so without a
-warm-up every feature would hang once on its first use on macOS. nix-basecamp
-runs that check ahead of time for Emacs's ~3000 built-in `.eln`, and
-emacs-camp does it for the ones it builds:
+warm-up every feature would hang once on its first use on macOS. emacs-camp
+runs that check ahead of time:
 
+- Emacs's ~3000 built-in `.eln`, once per Emacs store path, from nix-darwin's
+  activation in the background (about 15 minutes, no CPU; Emacs is usable
+  meanwhile; `emacs-camp.warmNativeLisp`). A run cut short by a reboot starts
+  again on the next switch;
 - `.eln` for the init and user files, as soon as the switch compiles them;
 - package `.eln`, when the package sync finishes, plus from Emacs itself at
   startup and after every async compile batch (`ecamp-eln-warm`).
@@ -273,7 +285,9 @@ emacs-camp does it for the ones it builds:
 Linux and Windows don't do this check, so they get no warming and no
 `eln-warm` link. GitHub's macOS runners skip the check too (the "macOS .eln
 vetting cost" CI step measures 0.000 s for both opens). A regular Apple
-Silicon Mac spends about 0.4 s on the first open of a new `.eln`.
+Silicon Mac spends about 0.4 s on the first open of a new `.eln`, so CI's
+`eln-warm-measure` job (weekly and on demand) checks that the built-in
+warm-up starts and finishes, not what it saves.
 
 ### What lands where
 
@@ -309,7 +323,9 @@ and no `Applications/`):
 
 ~/.emacs.before-emacs-camp(.~N~), ~/.emacs.d.before-emacs-camp(.~N~)   moved aside whenever they appear
 
-/nix/store/…-emacs-31.1/             the Emacs (nix-basecamp), built-in .eln included
+/nix/store/…-emacs-31.1/             the Emacs, built-in .eln included
+/Applications/Nix Apps/Emacs.app     (macOS) copied by nix-darwin
+~/.cache/emacs/eln-warmed.<emacs>    (macOS) built-in .eln warmed for that Emacs
 ```
 
 | Path in `~/.config/emacs/` | Owner |
@@ -334,27 +350,31 @@ would load all packages at startup.
 `Dockerfile` builds `ghcr.io/ajchemist/emacs-camp`:
 
 - One deploy path: a Nix stage builds the flake's
-  `homeConfigurations.sandbox-<arch>-linux` (basecamp's Emacs plus this module)
+  `homeConfigurations.sandbox-<arch>-linux` (the Emacs and the module)
   and runs its Home Manager activation, so the links, `extras-default.el`,
   compile and package sync are the module's own. Only the home and its
   `/nix/store` closure ship, without Nix, as two tags: `:latest` on
   `scratch`, nothing else (about 170 MB compressed), and `:debian` on Debian
   slim, for apt and a `/bin/sh` (about 200 MB).
 - The sandbox is lightened by options, not by a second recipe:
-  `basecamp.emacs.nativeComp = false` drops gcc and libgccjit, a bare
+  `emacs-camp.nativeComp = false` drops gcc and libgccjit, a bare
   `systemctl` keeps systemd out, git is `gitMinimal`, and no extra is
   on (`M-x customize-variable RET ecamp-extras` turns one on).
 - GitHub Actions (`.github/workflows/image.yml`) builds both tags from main for
   amd64 and arm64, each on a native runner, and joins them per tag.
-  It runs on every push that touches `lisp/`, `extras/`, `sync.el`,
-  `compile.el`, `module.nix`, `flake.*` or `Dockerfile`, and nightly at 18:00 UTC. MELPA packages move only
-  with the pinned snapshot, so the nightly build picks up GNU and NonGNU ELPA
-  updates. A newer build cancels a running one.
+  It runs on every push that touches the Emacs build (`lib/`, `darwin/`,
+  `patches/`, `install.nix`), the runtime (`lisp/`, `extras/`, `sync.el`,
+  `compile.el`, `module.nix`), `flake.*` or `Dockerfile`, and nightly at
+  18:00 UTC. MELPA packages move only with the pinned snapshot, so the
+  nightly build picks up GNU and NonGNU ELPA updates. A newer build cancels a
+  running one.
 
 ## Checks
 
-For each platform, `nix flake check` builds a home from basecamp's Emacs plus
-this module, and that build byte-compiles `lisp/` with that Emacs.
+For each platform, `nix flake check` builds a home with every extra on, whose
+build byte-compiles `lisp/` with the installed Emacs, and checks the install
+options (`ci/installation.nix`) and the Emacs.app takeover and warmer scripts
+(`ci/test-emacs.py`).
 
 CI (`.github/workflows/ci.yml`) has three kinds of jobs:
 
@@ -363,10 +383,11 @@ CI (`.github/workflows/ci.yml`) has three kinds of jobs:
   in;
 - a real deploy on ubuntu and macOS.
 
-Every job uses basecamp's Emacs (this flake's `packages.<system>.emacs`).
+Every job uses this flake's Emacs (`packages.<system>.emacs`).
 Windows, where Nix does not run, installs GNU's build of the same version, and
 the lint job reads that version from the flake. CI runs only when code changes
-(`lisp/`, `ci/`, `sync.el`, `module.nix`, the flake, the workflow), plus a
+(`lisp/`, `extras/`, `ci/`, `sync.el`, `compile.el`, `module.nix`, the Emacs
+build, the flake, the workflow), plus a
 weekly schedule. `ci/smoke.el` boots the config the same way Emacs does and
 verifies that:
 

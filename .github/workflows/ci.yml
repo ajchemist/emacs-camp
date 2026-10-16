@@ -8,6 +8,12 @@ on:
       - lisp/**
       - ci/**
       - sync.el
+      - patches/**
+      - lib/**
+      - darwin/**
+      - install.nix
+      - extras/**
+      - compile.el
       - module.nix
       - flake.nix
       - flake.lock
@@ -20,7 +26,7 @@ on:
 
 jobs:
   # Static checks: all flake outputs evaluate, lisp/ byte-compiles with
-  # nix-basecamp's Emacs (warnings fail), and the CI helper scripts parse.
+  # emacs-camp's Emacs (warnings fail), and the CI helper scripts parse.
   lint:
     runs-on: ubuntu-latest
     outputs:
@@ -30,19 +36,19 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v23
       - name: Evaluate all outputs
         run: nix flake check --all-systems --no-build
-      - name: Byte-compile lisp/ against basecamp's Emacs (module check)
-        run: nix build .#checks.x86_64-linux.home
-      - name: basecamp's Emacs version (Windows installs the same one)
+      - name: Byte-compile lisp/ against emacs-camp's Emacs (module check)
+        run: nix flake check
+      - name: emacs-camp's Emacs version (Windows installs the same one)
         id: emacs
         run: echo "version=$(nix eval --raw .#packages.x86_64-linux.emacs.version)" >> "$GITHUB_OUTPUT"
       - name: Helpers parse
         run: |
-          python3 -m py_compile ci/mock-acp-agent.py ci/test_activation.py ci/updates.py ci/bump.py
-          bash -n ci/e2e-deploy.sh ci/eln-vetting.sh
+          python3 -m py_compile ci/mock-acp-agent.py ci/test_activation.py ci/test-emacs.py ci/updates.py ci/bump.py
+          bash -n ci/e2e-deploy.sh ci/eln-vetting.sh ci/measure-eln-warm.sh
 
   # The module-free path on every OS: lisp/ copied in, the package sync, a
   # module-style byte-compile, then smoke + agent-shell E2E. Emacs is
-  # basecamp's (packages.<system>.emacs); Windows, where Nix does not run,
+  # emacs-camp's (packages.<system>.emacs); Windows, where Nix does not run,
   # takes GNU's build of the same version.
   runtime:
     strategy:
@@ -58,12 +64,12 @@ jobs:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v23
         if: runner.os != 'Windows'
-      - name: Emacs from basecamp
+      - name: Emacs from emacs-camp
         if: runner.os != 'Windows'
         run: |
           nix build .#emacs -o "$RUNNER_TEMP/emacs"
           echo "$RUNNER_TEMP/emacs/bin" >> "$GITHUB_PATH"
-      - name: Emacs (Windows, GNU build of basecamp's version)
+      - name: Emacs (Windows, GNU build of emacs-camp's version)
         if: runner.os == 'Windows'
         env:
           V: ${{ needs.lint.outputs.emacs-version }}
@@ -75,7 +81,7 @@ jobs:
             curl -sSfL --connect-timeout 15 -o "$RUNNER_TEMP/emacs.zip" "$m/$f" && break
           done
           unzip -q "$RUNNER_TEMP/emacs.zip" -d /c/emacs
-          echo 'C:\emacs\bin' >> "$GITHUB_PATH"
+          printf '%s\n' 'C:\emacs\bin' >> "$GITHUB_PATH"
       - name: Lay out an init directory
         run: |
           d="$RUNNER_TEMP/emacs.d"; mkdir -p "$d"; cp lisp/*.el "$d/"
@@ -104,7 +110,10 @@ jobs:
       - name: Byte-compile as the module does
         # Only the files from lisp/, matching the module, and not the
         # package-quickstart.el that the sync wrote beside them.
-        run: emacs --batch -l compile.el --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile $(for f in lisp/*.el; do echo "$D/${f#lisp/}"; done)
+        run: |
+          sources=()
+          for f in lisp/*.el; do sources+=("$D/${f#lisp/}"); done
+          emacs --batch -l compile.el --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile "${sources[@]}"
       - name: Native-compile as the module does
         # emacsCampNativeCompile: the linked sources, :ensure off.
         run: |
@@ -120,7 +129,7 @@ jobs:
       - name: agent-shell E2E (mock ACP agent)
         run: emacs --batch --init-directory "$D" -l ci/agent-shell-e2e.el
 
-  # The real product flow: apply nix-basecamp's builder and this module to
+  # The real product flow: apply emacs-camp's builder and this module to
   # the runner, then rerun smoke and E2E on the installed result.
   deploy:
     strategy:
@@ -131,6 +140,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v23
+      - name: Installation and helper regression checks
+        run: nix flake check
       - name: Deploy onto the runner
         run: ./ci/e2e-deploy.sh
       - name: Smoke (deployed config)
@@ -144,7 +155,7 @@ jobs:
           mkdir -p "$HOME/.config/emacs/eln-cache/29.1-0000000000/stale"
           ./ci/e2e-deploy.sh
           test ! -e "$HOME/.config/emacs/eln-cache/29.1-0000000000"
-          [ "$(ls "$HOME/.config/emacs/eln-cache" | wc -l)" -eq 1 ]
+          [ "$(find "$HOME/.config/emacs/eln-cache" -mindepth 1 -maxdepth 1 | wc -l)" -eq 1 ]
           grep -q 'pruned eln-cache/29.1-0000000000' "${XDG_CACHE_HOME:-$HOME/.cache}/emacs-camp/sync.log"
       - name: Legacy ~/.emacs(.d) recurring and as symlinks
         run: python3 ci/test_activation.py
@@ -182,7 +193,7 @@ jobs:
         if: env.ANTHROPIC_API_KEY != ''
       - uses: DeterminateSystems/nix-installer-action@v23
         if: env.ANTHROPIC_API_KEY != ''
-      - name: Emacs from basecamp
+      - name: Emacs from emacs-camp
         if: env.ANTHROPIC_API_KEY != ''
         run: |
           nix build .#emacs -o "$RUNNER_TEMP/emacs"
@@ -201,3 +212,18 @@ jobs:
       - name: Skipped (no ANTHROPIC_API_KEY secret)
         if: env.ANTHROPIC_API_KEY == ''
         run: echo "::notice::agent-shell-claude skipped; add the ANTHROPIC_API_KEY repository secret to run it"
+
+  # Lab measurement, macOS only (the vetting it pays for does not exist on
+  # Linux): the background warm-up of Emacs's built-in .eln, timed to the end.
+  # Long (~15 min of waiting): weekly and on demand, not on push or PR.
+  eln-warm-measure:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - name: Deploy onto the runner (nix-darwin, GUI Emacs)
+        run: ./ci/e2e-deploy.sh
+      - name: Measure the warm-up
+        run: ./ci/measure-eln-warm.sh

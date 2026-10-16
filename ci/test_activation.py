@@ -1,6 +1,6 @@
 """Activation steps of the Home Manager module, run against a scratch HOME.
 
-python3 ci/test_activation.py   (needs nix; evaluates the module via basecamp)
+python3 ci/test_activation.py   (needs nix; evaluates the module via basecamp's mkHome)
 """
 import json
 import os
@@ -14,8 +14,8 @@ FLAKE = Path(__file__).resolve().parents[1]
 
 def activation(name):
     expr = (f'let f = builtins.getFlake "path:{FLAKE}"; '
-            f'c = (f.inputs.basecamp.lib.mkHome {{ user = "fixture"; emacs = "nox"; system = builtins.currentSystem; '
-            f'modules = [ f.homeModules.default ]; }}).config; '
+            f'c = (f.inputs.basecamp.lib.mkHome {{ user = "fixture"; system = builtins.currentSystem; '
+            f'modules = [ f.homeModules.default {{ emacs-camp.enable = true; }} ]; }}).config; '
             f'in c.home.activation.{name}.data')
     text = subprocess.run(['nix', 'eval', '--impure', '--raw', '--expr', expr],
                           check=True, capture_output=True, text=True).stdout

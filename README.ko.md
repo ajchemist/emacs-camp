@@ -5,11 +5,10 @@
 
 [English](README.md) · 한국어
 
-emacs-camp는 init은 작게 두고 패키지는 넉넉히 갖춘 Emacs 런타임입니다.
-패키지는 `use-package`가 관리합니다. 없으면 설치하고, 무언가 호출하기
-전까지는 로드하지 않으며, 로드될 때 설정을 적용합니다. Emacs 자체는
-[nix-basecamp](https://github.com/ajchemist/nix-basecamp)가 제공하고, 이
-저장소는 그 위에서 돌아가는 부분만 다룹니다.
+emacs-camp는 init은 작게 두고 패키지는 넉넉히 갖춘 Emacs입니다. flake가
+Emacs를 빌드해 설치하고 런타임(`lisp/`)을 배포합니다. 런타임은 Nix 없이도
+돕니다. 패키지는 `use-package`가 관리합니다. 없으면 설치하고, 무언가
+호출하기 전까지는 로드하지 않으며, 로드될 때 설정을 적용합니다.
 
 ## 플레이그라운드
 
@@ -36,12 +35,6 @@ Play with Docker도 후보였지만 2026-03-01에 서비스를 종료했습니�
 - iximiuz Labs: `playgrounds/iximiuz/manifest.yaml`. 고친 뒤에는
   `labctl playground update emacs-camp-7b268ff0 -f playgrounds/iximiuz/manifest.yaml`을 실행합니다.
 - 모두 [데모 이미지](#데모-이미지)의 이미지를 실행합니다.
-
-```
-nix-basecamp   Emacs 바이너리, GUI/nox, Emacs.app, store .eln warm-up
-emacs-camp     lisp/ 런타임 + 이를 배포하는 Home Manager 모듈
-your flake     emacs-camp.userFiles로 넣는 자신의 파일
-```
 
 ## 런타임 (`lisp/`, Nix 불필요)
 
@@ -186,14 +179,30 @@ extra를 적은 것 말고는 모두 `init.el`의 `use-package` 블록 하나씩
   orderless가 합니다.
 - auto-complete: company 이전 세대입니다. 마찬가지로 corfu가 대신합니다.
 
-## Home Manager 모듈
+## Nix로 설치
+
+```
+nix-basecamp   시스템: nixpkgs, nix-darwin·Home Manager 빌더
+emacs-camp     Emacs(빌드, 설치, Emacs.app, .eln warm-up) + lisp/ 런타임
+your flake     emacs-camp.userFiles로 넣는 자신의 파일
+```
+
+macOS에서는 nix-darwin이 Emacs를 시스템 패키지로 설치하고 Emacs.app을
+`/Applications/Nix Apps`에 복사하며, 다른 `Emacs.app`은 옆으로 옮겨 둡니다.
+Linux에서는 Home Manager가 설치합니다. 어느 쪽이든 Home Manager 모듈이
+런타임을 배포하고, 같은 Emacs로 컴파일합니다. 전체 flake 예제, 옵션, 빌드
+출력은 [docs/nix.md](docs/nix.md)에, Emacs 소스 패치는
+[docs/source-patches.md](docs/source-patches.md)에 있습니다.
 
 ```nix
 inputs.emacs-camp = {
   url = "github:ajchemist/emacs-camp";
   inputs.basecamp.follows = "basecamp";
 };
-# basecamp.lib.mkDarwin / mkHome으로 만든 home, basecamp.emacs.enable = true에서:
+# macOS, nix-darwin 모듈에서(Linux는 Home Manager에서 설정):
+imports = [ emacs-camp.darwinModules.default ];
+emacs-camp = { enable = true; gui = true; };
+# Home Manager:
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.extras = [
@@ -211,8 +220,8 @@ emacs-camp.extras = [
 배포되고, 켜면 처음 로드할 때 native 컴파일됩니다. extra는 자기 패키지를
 `use-package`로 직접 가져올 수 있고, 켠 extra만 설치합니다(docs/adr/0002-extras-opt-in-cost.md).
 
-모듈이 basecamp에서 쓰는 것은 계약(`basecamp.emacs.package`,
-`.warmProgram`)뿐입니다. switch할 때마다 아래 작업을 합니다.
+모듈은 자기가 설치하는 Emacs(`emacs-camp.package`)로 컴파일합니다.
+switch할 때마다 아래 작업을 합니다.
 
 | 단계 | 어디서 | 실패하면 |
 |---|---|---|
@@ -254,9 +263,12 @@ macOS는 프로세스가 Mach-O 파일을 처음 `dlopen`할 때 그 파일을 �
 파일 하나에 0.3~0.4초가 걸리고, 한 번에 하나씩 처리하며, 결과는 파일별로
 캐시합니다. native 컴파일된 Lisp 파일(`.eln`)도 Mach-O dylib입니다. 그래서
 warm-up이 없으면 macOS에서는 기능마다 처음 쓸 때 한 번씩 멈춥니다.
-nix-basecamp는 Emacs에 내장된 `.eln` 약 3000개의 검사를 미리 돌려 두고,
-emacs-camp는 자기가 만든 것을 맡습니다.
+emacs-camp는 이 검사를 미리 돌려 둡니다.
 
+- Emacs에 내장된 `.eln` 약 3000개: Emacs store 경로마다 한 번, nix-darwin
+  activation에서 백그라운드로(약 15분, CPU는 쓰지 않고 그동안에도 Emacs를
+  쓸 수 있음, `emacs-camp.warmNativeLisp`). 재부팅으로 끊기면 다음 switch에서
+  다시 시작
 - init과 user 파일의 `.eln`: switch가 컴파일을 마치면 바로
 - 패키지 `.eln`: 패키지 sync가 끝날 때. 그리고 Emacs가 직접, 시작할 때와
   비동기 컴파일 배치가 끝날 때마다 (`ecamp-eln-warm`)
@@ -264,7 +276,8 @@ emacs-camp는 자기가 만든 것을 맡습니다.
 Linux와 Windows는 이 검사를 하지 않으므로 warm도 `eln-warm` 링크도 없습니다.
 GitHub의 macOS runner도 검사를 건너뜁니다(CI의 "macOS .eln vetting cost"
 단계에서 두 번 모두 0.000초). 일반 Apple Silicon Mac은 새 `.eln`을 처음 열 때
-0.4초쯤 씁니다.
+0.4초쯤 씁니다. 그래서 CI의 `eln-warm-measure` 작업(매주, 수동 실행)은 내장
+warm-up이 시작해서 끝나는지를 확인할 뿐, 아낀 시간을 재지는 않습니다.
 
 ### 무엇이 어디에 놓이나
 
@@ -300,7 +313,9 @@ switch를 마친 호스트는 다음과 같습니다(macOS 기준. Linux에는 `
 
 ~/.emacs.before-emacs-camp(.~N~), ~/.emacs.d.before-emacs-camp(.~N~)   나타날 때마다 옮겨 둔 것
 
-/nix/store/…-emacs-31.1/             Emacs 본체 (nix-basecamp), 내장 .eln 포함
+/nix/store/…-emacs-31.1/             Emacs 본체, 내장 .eln 포함
+/Applications/Nix Apps/Emacs.app     (macOS) nix-darwin이 복사
+~/.cache/emacs/eln-warmed.<emacs>    (macOS) 그 Emacs의 내장 .eln warm 완료 표시
 ```
 
 | `~/.config/emacs/` 안의 경로 | 관리 주체 |
@@ -325,26 +340,30 @@ use-package 정책(`always-ensure`, `always-defer`)은 `eval-and-compile`로
 `Dockerfile`은 `ghcr.io/ajchemist/emacs-camp`를 빌드합니다.
 
 - 배포 경로는 하나입니다. Nix 단계에서 flake의
-  `homeConfigurations.sandbox-<arch>-linux`(basecamp의 Emacs + 이 모듈)를
+  `homeConfigurations.sandbox-<arch>-linux`(Emacs와 모듈)를
   빌드하고 Home Manager activation을 실행합니다. 링크, `extras-default.el`,
   컴파일, 패키지 sync가 모두 모듈 그대로입니다. 결과인 홈과 그 `/nix/store`
   closure만 Nix 없이 담아 태그 두 개로 냅니다. `:latest`는 `scratch` 위에
   그것만(압축 약 170 MB), `:debian`은 apt와 `/bin/sh`가 필요할 때 쓰는 Debian
   slim 기반(약 200 MB)입니다.
 - 샌드박스 경량화는 별도 레시피가 아니라 옵션으로 합니다.
-  `basecamp.emacs.nativeComp = false`로 gcc와 libgccjit을, `systemctl`을 이름만
+  `emacs-camp.nativeComp = false`로 gcc와 libgccjit을, `systemctl`을 이름만
   두어 systemd를 빼고, git은 `gitMinimal`을 쓰며, extra는 하나도
   켜지 않습니다(`M-x customize-variable RET ecamp-extras`로 켭니다).
 - GitHub Actions(`.github/workflows/image.yml`)가 main에서 두 태그를 amd64와
-  arm64로 각각 네이티브 러너에서 빌드해 태그마다 하나로 묶습니다. `lisp/`, `extras/`, `sync.el`, `compile.el`, `module.nix`, `flake.*`, `Dockerfile`이
+  arm64로 각각 네이티브 러너에서 빌드해 태그마다 하나로 묶습니다. Emacs
+  빌드(`lib/`, `darwin/`, `patches/`, `install.nix`), 런타임(`lisp/`,
+  `extras/`, `sync.el`, `compile.el`, `module.nix`), `flake.*`, `Dockerfile`이
   바뀌는 push마다 돌고, 매일 18:00 UTC(03:00 KST)에도 돕니다. MELPA
   패키지는 고정된 스냅샷과 함께만 움직이므로, 매일 빌드는 GNU·NonGNU ELPA 갱신을
   받습니다. 새 빌드가 시작되면 돌고 있던 빌드는 취소됩니다.
 
 ## 검사
 
-`nix flake check`는 플랫폼마다 basecamp의 Emacs와 이 모듈로 home을 빌드하고,
-그 빌드가 같은 Emacs로 `lisp/`를 byte 컴파일합니다.
+`nix flake check`는 플랫폼마다 extra를 모두 켠 home을 빌드하고(그 빌드가
+설치되는 Emacs로 `lisp/`를 byte 컴파일합니다), 설치 옵션
+(`ci/installation.nix`)과 Emacs.app 정리·warm 스크립트(`ci/test-emacs.py`)를
+검사합니다.
 
 CI(`.github/workflows/ci.yml`)에는 세 종류의 작업이 있습니다.
 
@@ -352,10 +371,11 @@ CI(`.github/workflows/ci.yml`)에는 세 종류의 작업이 있습니다.
 - ubuntu, macOS, Windows에서 모듈 없이 `lisp/`만 복사해 돌리는 런타임 작업
 - ubuntu와 macOS에서 실제로 배포하는 작업
 
-모든 작업은 basecamp의 Emacs(이 flake의 `packages.<system>.emacs`)를 씁니다.
+모든 작업은 이 flake의 Emacs(`packages.<system>.emacs`)를 씁니다.
 Nix가 돌지 않는 Windows는 같은 버전의 GNU 빌드를 설치하고, 그 버전은 lint
-작업이 flake에서 읽어 옵니다. CI는 코드(`lisp/`, `ci/`, `sync.el`,
-`module.nix`, flake, workflow)가 바뀔 때와 매주 정기 실행 때만 돕니다.
+작업이 flake에서 읽어 옵니다. CI는 코드(`lisp/`, `extras/`, `ci/`, `sync.el`,
+`compile.el`, `module.nix`, Emacs 빌드, flake, workflow)가 바뀔 때와 매주
+정기 실행 때만 돕니다.
 `ci/smoke.el`은 Emacs와 같은 방식으로 설정을 띄운 뒤 아래를 확인합니다.
 
 - init이 가벼운지. `ECAMP_INIT_BUDGET`초(기본 1.5, 측정값은 job summary에
