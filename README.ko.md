@@ -182,7 +182,7 @@ extra를 적은 것 말고는 모두 `init.el`의 `use-package` 블록 하나씩
 ## Nix로 설치
 
 ```
-nix-basecamp   시스템: nixpkgs, nix-darwin·Home Manager 빌더
+upstream       nixpkgs, Home Manager, nix-darwin (여러분의 flake.lock이 고정)
 emacs-camp     Emacs(빌드, 설치, Emacs.app, .eln warm-up) + lisp/ 런타임
 your flake     emacs-camp.userFiles로 넣는 자신의 파일
 ```
@@ -197,7 +197,10 @@ Linux에서는 Home Manager가 설치합니다. 어느 쪽이든 Home Manager �
 ```nix
 inputs.emacs-camp = {
   url = "github:ajchemist/emacs-camp";
-  inputs.basecamp.follows = "basecamp";
+  # 모든 flake가 같은 pin을 쓰도록 자기 input에 묶음
+  inputs.nixpkgs.follows = "nixpkgs";
+  inputs.home-manager.follows = "home-manager";
+  inputs.nix-darwin.follows = "nix-darwin";
 };
 # macOS, nix-darwin 모듈에서(Linux는 Home Manager에서 설정):
 imports = [ emacs-camp.darwinModules.default ];

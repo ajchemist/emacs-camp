@@ -189,7 +189,7 @@ special handling of mouse clicks within those margins.
 ## Installing with Nix
 
 ```
-nix-basecamp   the system: nixpkgs, the nix-darwin and Home Manager builders
+upstream       nixpkgs, Home Manager, nix-darwin (your flake.lock pins them)
 emacs-camp     Emacs (build, install, Emacs.app, .eln warm-up) + the lisp/ runtime
 your flake     your own files through emacs-camp.userFiles
 ```
@@ -204,7 +204,10 @@ complete flake, every option and the build outputs, and
 ```nix
 inputs.emacs-camp = {
   url = "github:ajchemist/emacs-camp";
-  inputs.basecamp.follows = "basecamp";
+  # one pin for every flake: point these at your own inputs
+  inputs.nixpkgs.follows = "nixpkgs";
+  inputs.home-manager.follows = "home-manager";
+  inputs.nix-darwin.follows = "nix-darwin";
 };
 # macOS, in the nix-darwin modules (on Linux, set these in Home Manager):
 imports = [ emacs-camp.darwinModules.default ];

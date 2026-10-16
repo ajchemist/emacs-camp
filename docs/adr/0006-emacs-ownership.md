@@ -1,6 +1,6 @@
 # 0006: Emacs 빌드와 설치도 emacs-camp가 맡는다
 
-날짜: 2026-10-16 · 상태: 채택 · nix-basecamp의 [ADR 0001](https://github.com/ajchemist/nix-basecamp/blob/main/docs/adr/0001-emacs-install-layers.md)이 basecamp에 둔 설치 층을 이 저장소로 옮김(basecamp ADR 0002)
+날짜: 2026-10-16 · 상태: 채택 · nix-basecamp의 [ADR 0001](https://github.com/ajchemist/nix-basecamp/blob/main/docs/adr/0001-emacs-install-layers.md)이 basecamp에 둔 설치 층을 이 저장소로 옮김(basecamp ADR 0002) · "basecamp는 input으로 남습니다" 항목은 [0007](0007-upstream-inputs.md)로 대체
 
 ## 배경
 

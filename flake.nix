@@ -1,33 +1,46 @@
 {
   description = "emacs-camp: Emacs builds, installation and runtime configuration";
 
-  # nix-basecamp is the system baseline: nixpkgs (which fixes the Emacs source
-  # and recipe) and the mkHome/mkDarwin builders the fixtures, CI and sandbox
-  # use. It has no Emacs of its own; the modules here do not depend on it.
-  inputs.basecamp.url = "github:ajchemist/nix-basecamp";
-  # CI only: the agents and ACP adapters agent-shell drives in the agents job.
-  # The modules do not depend on it.
-  inputs.agent-camp = {
-    url = "github:ajchemist/agent-camp";
-    inputs.basecamp.follows = "basecamp";
+  # Upstream directly, the same URLs as nix-basecamp's: a downstream points
+  # all three at its own with `follows`, so one lock pins them for everything.
+  # nixpkgs fixes the Emacs source and recipe; home-manager and nix-darwin
+  # serve only the fixtures, the sandbox and the CI deploy.
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    home-manager = {
+      url = "git+https://github.com/nix-community/home-manager.git?ref=master&shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-darwin = {
+      url = "git+https://github.com/nix-darwin/nix-darwin.git?ref=master&shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # CI only: the agents and ACP adapters agent-shell drives in the agents
+    # job. The modules do not depend on it.
+    agent-camp = {
+      url = "github:ajchemist/agent-camp";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+      inputs.nix-darwin.follows = "nix-darwin";
+    };
   };
 
-  outputs = { self, basecamp, ... }:
+  outputs = { self, nixpkgs, home-manager, nix-darwin, ... }:
     let
-      nixpkgs = basecamp.inputs.nixpkgs;
       lib = nixpkgs.lib;
+      fixture = import ./ci/fixture.nix { inherit nixpkgs home-manager nix-darwin; };
       build = import ./lib/emacs.nix { inherit lib; };
       systems = [ "aarch64-darwin" "x86_64-linux" "aarch64-linux" ];
       # Fixtures turn every extra on: only default-on extras compile, so this
       # is what keeps all of them compiling in CI.
       allExtras = map (lib.removeSuffix ".el")
         (builtins.filter (lib.hasSuffix ".el") (builtins.attrNames (builtins.readDir ./extras)));
-      # basecamp's builders with emacs-camp on: the install where it happens
-      # (nix-darwin on macOS, Home Manager on Linux) and the runtime in the home.
-      home = args: basecamp.lib.mkHome (args // {
+      # A home / nix-darwin system with emacs-camp on: the install where it
+      # happens (nix-darwin on macOS, Home Manager on Linux), the runtime in the home.
+      home = args: fixture.home (args // {
         modules = [ self.homeModules.default { emacs-camp.enable = lib.mkDefault true; } ] ++ args.modules or [ ];
       });
-      darwin = args: basecamp.lib.mkDarwin (args // {
+      darwin = args: fixture.darwin (args // {
         modules = [ self.darwinModules.default {
           emacs-camp.enable = lib.mkDefault true;
           home-manager.sharedModules = [ self.homeModules.default ];
@@ -41,7 +54,7 @@
         modules = [ ({ lib, pkgs, config, ... }: {
           emacs-camp = { gui = false; nativeComp = false; };
           # Only what the demo runs: Emacs and a git without its perl/python
-          # tools (basecamp's full git and jq, home-manager's CLI are dropped).
+          # tools (home-manager's CLI is dropped).
           # The image starts from scratch, so the shell and its tools come from here.
           home.packages = lib.mkForce (with pkgs; [
             config.emacs-camp.package gitMinimal bashInteractive coreutils less cacert

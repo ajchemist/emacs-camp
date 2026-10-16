@@ -2,48 +2,33 @@
   "nodes": {
     "agent-camp": {
       "inputs": {
-        "basecamp": [
-          "basecamp"
+        "home-manager": [
+          "home-manager"
+        ],
+        "nix-darwin": [
+          "nix-darwin"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1791476313,
-        "narHash": "sha256-glmYh+9Ic7MlPVpjVH/r1qPwVW4eD478r6+LqNsWSYw=",
+        "lastModified": 1792129322,
+        "narHash": "sha256-/yeIbrVX4GyZFsHJ6RkEgLbBuM+TLL4Z2y0q3xwq4hQ=",
         "owner": "ajchemist",
         "repo": "agent-camp",
-        "rev": "05aa1cc308a1140fadd72bd2a682eab4f7cb4bdb",
+        "rev": "d14ce9fbd3b48c0c2dd55aaf58e52c25dbea3c9d",
         "type": "github"
       },
       "original": {
         "owner": "ajchemist",
         "repo": "agent-camp",
-        "type": "github"
-      }
-    },
-    "basecamp": {
-      "inputs": {
-        "home-manager": "home-manager",
-        "nix-darwin": "nix-darwin",
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1792126342,
-        "narHash": "sha256-YQa0Jy/TuoQa5XUHHNfaMO7joubdxj7k4anmA9Wzrjs=",
-        "owner": "ajchemist",
-        "repo": "nix-basecamp",
-        "rev": "85c925441cf97426ce44f9b5f9554d89710b2b85",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ajchemist",
-        "repo": "nix-basecamp",
         "type": "github"
       }
     },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
-          "basecamp",
           "nixpkgs"
         ]
       },
@@ -66,7 +51,6 @@
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
-          "basecamp",
           "nixpkgs"
         ]
       },
@@ -105,7 +89,9 @@
     "root": {
       "inputs": {
         "agent-camp": "agent-camp",
-        "basecamp": "basecamp"
+        "home-manager": "home-manager",
+        "nix-darwin": "nix-darwin",
+        "nixpkgs": "nixpkgs"
       }
     }
   },

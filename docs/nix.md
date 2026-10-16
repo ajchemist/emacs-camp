@@ -20,13 +20,16 @@ nativeComp ? true; patches ? []; }` is the same builder, `lib.emacsMajor` the
 pinned major and `lib.emacsWarm { system; }` the warmer.
 
 `lib/emacs.nix` selects the major (31). nixpkgs, which fixes the Emacs source
-revision, recipe and upstream patches, comes from
-[nix-basecamp](https://github.com/ajchemist/nix-basecamp). A downstream that
-sets `inputs.basecamp.follows = "basecamp"` gets its own lock's nixpkgs.
+revision, recipe and upstream patches, is pinned in `flake.lock`; a downstream
+that makes `inputs.nixpkgs` follow its own gets its own lock's
+(docs/adr/0007-upstream-inputs.md).
 
 ## A downstream flake
 
-basecamp's builders make the system or home; emacs-camp adds its modules.
+Any Home Manager or nix-darwin configuration takes the modules. This one
+builds with [nix-basecamp](https://github.com/ajchemist/nix-basecamp)'s
+builders, and points emacs-camp's three inputs at basecamp's, so one lock pins
+them all:
 
 ```nix
 {
@@ -34,7 +37,9 @@ basecamp's builders make the system or home; emacs-camp adds its modules.
     basecamp.url = "github:ajchemist/nix-basecamp";
     emacs-camp = {
       url = "github:ajchemist/emacs-camp";
-      inputs.basecamp.follows = "basecamp";
+      inputs.nixpkgs.follows = "basecamp/nixpkgs";
+      inputs.home-manager.follows = "basecamp/home-manager";
+      inputs.nix-darwin.follows = "basecamp/nix-darwin";
     };
   };
   outputs = { basecamp, emacs-camp, ... }: {
@@ -115,5 +120,5 @@ nix build path:.#darwinConfigurations.fixture.system
 nix build path:.#checks.x86_64-linux.home path:.#checks.x86_64-linux.helpers
 ```
 
-To try an unpublished basecamp, add
-`--override-input basecamp path:../nix-basecamp`.
+A downstream tries an unpublished checkout with
+`--override-input emacs-camp path:../emacs-camp`.
