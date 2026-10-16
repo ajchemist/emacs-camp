@@ -106,6 +106,13 @@
   :functions exec-path-from-shell-initialize
   :config (exec-path-from-shell-initialize))
 
+;; Include the remote host's own PATH (from its login environment) when
+;; TRAMP searches for utilities, so tools in user-specific directories are
+;; found too.  Keep TRAMP deferred until a remote connection needs it.
+(defvar tramp-remote-path)
+(with-eval-after-load 'tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
 (use-package ibuffer
   :ensure nil
   :bind ("C-x C-b" . ibuffer))
