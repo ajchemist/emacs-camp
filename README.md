@@ -168,6 +168,13 @@ One `use-package` block in `init.el` each, unless an extra is named.
 
 The `00-korean` extra uses only built-in features.
 
+The `20-scrolling` extra enables [ultra-scroll](https://github.com/jdtsmith/ultra-scroll)
+after init for pixel-precise wheel and trackpad scrolling. Run
+`M-x ultra-scroll-check` to check device support. Keyboard movement margins
+are separate: set the built-in `scroll-margin` and `scroll-conservatively`
+in your user files. This does not reproduce the old smooth-scrolling package's
+special handling of mouse clicks within those margins.
+
 #### Not used
 
 - helm, with helm-swoop, helm-ls-git and the helm extensions (helm-gtags,
@@ -197,8 +204,9 @@ inputs.emacs-camp = {
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.extras = [
-  "00-korean"  # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys
-  "10-prog"    # rainbow parens, eval flash, auto-closed brackets, off-screen paren context
+  "00-korean"     # hangul input on C-\, UTF-8 over EUC-KR, hangul/hanja keys
+  "10-prog"       # rainbow parens, eval flash, auto-closed brackets, off-screen paren context
+  "20-scrolling"  # ultra-scroll: pixel-precise wheel and trackpad scrolling
 ];
 ```
 

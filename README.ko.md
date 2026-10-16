@@ -164,6 +164,12 @@ extra를 적은 것 말고는 모두 `init.el`의 `use-package` 블록 하나씩
 
 `00-korean` extra는 내장 기능만 씁니다.
 
+`20-scrolling` extra는 init 이후 [ultra-scroll](https://github.com/jdtsmith/ultra-scroll)을
+켜서 휠과 트랙패드를 픽셀 단위로 스크롤합니다. `M-x ultra-scroll-check`로
+장치 지원을 확인할 수 있습니다. 키보드 이동 여백은 별도로 user 파일에서 내장
+`scroll-margin`과 `scroll-conservatively`로 정합니다. 옛 smooth-scrolling 패키지의
+여백 안 마우스 클릭 처리는 재현하지 않습니다.
+
 #### 쓰지 않는 것
 
 - helm과 helm-swoop, helm-ls-git, helm 확장들(helm-gtags, helm-cider,
@@ -191,8 +197,9 @@ inputs.emacs-camp = {
 imports = [ emacs-camp.homeModules.default ];
 emacs-camp.userFiles = [ ./emacs/fonts.el ];
 emacs-camp.extras = [
-  "00-korean"  # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
-  "10-prog"    # 무지개 괄호, eval 깜박임, 괄호 자동 닫기, 화면 밖 여는 괄호 표시
+  "00-korean"     # C-\ 한글 입력, EUC-KR 대신 UTF-8 우선, 한/영·한자 키
+  "10-prog"       # 무지개 괄호, eval 깜박임, 괄호 자동 닫기, 화면 밖 여는 괄호 표시
+  "20-scrolling"  # ultra-scroll: 휠과 트랙패드의 픽셀 단위 스크롤
 ];
 ```
 
